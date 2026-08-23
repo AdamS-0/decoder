@@ -82,9 +82,11 @@ namespace decoder {
             TryParseRawData();
         }
         
+        public void SetRawDataAndTryParse(string strRawData) {
+            rtbRawData.Text = strRawData;
+        }
         
-        
-        private void TryParseRawData() {
+        public void TryParseRawData() {
             try {
                 if ( _decCurrent == null ) { 
                     /* Decoder not defined */

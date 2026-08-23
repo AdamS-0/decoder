@@ -46,11 +46,11 @@ namespace decoder
         /// </summary>
         private void InitializeComponent()
         {
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem11 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem12 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem13 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem14 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem15 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem1 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem2 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem3 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem4 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem5 = new VisBox.TreeDetailsViewColumnItem();
             this.structInfoView1 = new VisBox.TreeDetailsView();
             this.pMain = new System.Windows.Forms.Panel();
             this.splitter2 = new System.Windows.Forms.Splitter();
@@ -68,31 +68,31 @@ namespace decoder
             // 
             // structInfoView1
             // 
-            treeDetailsViewColumnItem11.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem11.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem11.Text = "Name";
-            treeDetailsViewColumnItem11.Width = 95;
-            treeDetailsViewColumnItem12.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem12.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem12.Text = "Type";
-            treeDetailsViewColumnItem12.Width = 80;
-            treeDetailsViewColumnItem13.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem13.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem13.Text = "Bits";
-            treeDetailsViewColumnItem13.Width = 35;
-            treeDetailsViewColumnItem14.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem14.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem14.Text = "Value";
-            treeDetailsViewColumnItem14.Width = 75;
-            treeDetailsViewColumnItem15.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem15.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem15.Text = "Raw";
-            treeDetailsViewColumnItem15.Width = 95;
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem11);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem12);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem13);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem14);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem15);
+            treeDetailsViewColumnItem1.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem1.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem1.Text = "Name";
+            treeDetailsViewColumnItem1.Width = 95;
+            treeDetailsViewColumnItem2.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem2.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem2.Text = "Type";
+            treeDetailsViewColumnItem2.Width = 80;
+            treeDetailsViewColumnItem3.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem3.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem3.Text = "Bits";
+            treeDetailsViewColumnItem3.Width = 35;
+            treeDetailsViewColumnItem4.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem4.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem4.Text = "Value";
+            treeDetailsViewColumnItem4.Width = 75;
+            treeDetailsViewColumnItem5.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem5.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem5.Text = "Raw";
+            treeDetailsViewColumnItem5.Width = 95;
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem1);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem2);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem3);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem4);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem5);
             this.structInfoView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.structInfoView1.FlatStyle = VisBox.VisElement.VisFlatStyle.Collapsed;
             this.structInfoView1.Location = new System.Drawing.Point(138, 106);
@@ -197,6 +197,7 @@ namespace decoder
             this.Controls.Add(this.pMain);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
+            this.Icon = global::decoder.Resource1.icon1;
             this.Name = "Form1";
             this.Text = "Form1";
             this.pMain.ResumeLayout(false);

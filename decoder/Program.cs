@@ -11,10 +11,8 @@ using System.Windows.Forms;
 
 namespace decoder {
     class Program {
-        public static void Main ( string[] args ) {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            
+        [STAThread]
+        private static void Main(string[] args) {            
             Options opt = CommandLineParser.CommandLineParser.ParseArguments<Options>(args);
             
             if ( opt.help    != null ) { CommandLineParser.CommandLineParser.PrintHelp<Options>(); }
@@ -67,12 +65,15 @@ namespace decoder {
             
             Decoder dec2 = new Decoder( strStructC2 );
             
-            Form1 frm = new Form1();
-//            frm.BindDecoder( ref dec1 );
-            frm.AddDecoder( ref dec1 );
-            frm.AddDecoder( ref dec2 );
-
-            Application.Run(frm);
+//            Form1 frm = new Form1();
+////            frm.BindDecoder( ref dec1 );
+//            frm.AddDecoder( ref dec1 );
+//            frm.AddDecoder( ref dec2 );
+            
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+//            Application.Run(frm);
+            Application.Run( new MainListener() );
             
         }
     }

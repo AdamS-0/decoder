@@ -162,6 +162,8 @@ namespace decoder {
                 string strArrSize   = m.Groups["ArrayLen"].Value;
                 string strNoBits    = m.Groups["Bits"].Value;
                 
+                if ( strType.Length == 0 ) { continue; }
+                
                 strType     = _rgxSpaceCutter.Replace( strType, " " );
                 strName     = _rgxSpaceCutter.Replace( strName, " " );
                 strArrSize  = _rgxSpaceCutter.Replace( strArrSize, " " );
