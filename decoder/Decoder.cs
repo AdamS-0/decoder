@@ -16,15 +16,64 @@ namespace decoder {
     /// <summary>
     /// Description of Decoder.
     /// </summary>
-    public class Decoder {
+    public class Decoder : ICloneable {
+        private static readonly Regex _rgxStruct = new Regex(@"^struct\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\{", RegexOptions.Compiled);
+        private static readonly Regex _rgxStructTypedefEnd = new Regex(@"^\}\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*;", RegexOptions.Compiled);
+        
+        #region ICloneable implementation
+        public object Clone () {
+            Decoder dec = new Decoder();
+            dec._fields = new List<DecoderField>();
+            foreach( DecoderField decField in this._fields ) {
+                dec._fields.Add( (DecoderField)decField.Clone() );
+            }
+            
+            dec.Name = this.Name;
+            dec.RawBytes = new byte[ this.RawBytes.Length ];
+            return dec;
+        }
+        #endregion
+        
         
         public string Name = "";
         
-        public static List<DecoderField> ParseStruct(string strStructC) {
+        public static List<Decoder> AllDecoders = new List<Decoder>();
+        
+        public static Decoder FindByName(string decName) {
+            foreach ( Decoder dec in AllDecoders ) {
+                if ( dec.Name.Equals( decName ) ) {
+                    return dec;
+                }
+            }
+            return null;
+        }
+        
+        public static List<DecoderField> ParseStruct(string strStructC, ref string strStructName) {
             List<DecoderField> fields = new List<DecoderField>();
             
-            foreach ( string strStructLine in strStructC.Split('\n') ) {
-                List<DecoderField> fieldsSub = DecoderField.TryDecodeField( strStructLine );
+            string strStructCSplitted = strStructC.Replace("{", "{\n");
+            strStructCSplitted = strStructCSplitted.Replace(";", ";\n");
+            
+            bool gotTypedef = false;
+            DecoderGui decGui = MainListener.GetCurrGui();
+            foreach ( string strStructLine in strStructCSplitted.Split('\n') ) {
+                string lineI = strStructLine;
+                lineI = lineI.Replace("\t", " ");
+                lineI = lineI.Trim( ' ' );
+                
+                if ( strStructName.Length == 0 ) {
+                    if ( lineI.StartsWith("typedef ") ) {
+                        gotTypedef = true;
+                    }
+                    Match m = null;
+                    if ( ( m = _rgxStruct.Match( lineI ) ).Success ) {
+                        strStructName = m.Groups[1].ToString();
+                    } else if ( ( m = _rgxStructTypedefEnd.Match( lineI ) ).Success && gotTypedef ) {
+                        strStructName = m.Groups[1].ToString();
+                    }
+                }
+                
+                List<DecoderField> fieldsSub = DecoderField.TryDecodeField( lineI, decGui._decoders );
                 foreach ( DecoderField field in fieldsSub ) {
                     if ( field == null ) { continue; }
                     fields.Add( field );
@@ -36,20 +85,40 @@ namespace decoder {
         
         
         public  List<DecoderField>              _fields;
-        private byte[]                          _rawBytes;
+        public  byte[]                          RawBytes;
             
-        public Decoder( string strStructC ) {
-            this._fields = Decoder.ParseStruct( strStructC );
+        public Decoder( string strStructC, string decName = "" ) {
+            string structName = decName;
+            this._fields = Decoder.ParseStruct( strStructC, ref structName );
             int noBits = 0;
             foreach ( DecoderField decField in this._fields ) {
                 noBits += decField.NoBits * decField.NoElements;
             }
             int noBytes = ( noBits / 8 ) + 1;
-            this._rawBytes = new byte[noBytes];
+            this.RawBytes = new byte[noBytes];
+            
+            this.Name = structName;
         }
         
         public Decoder() {
             
+        }
+        
+        
+        public void ClearRaws() {
+            foreach ( DecoderField decField in this._fields ) {
+                if ( decField.Type == DecoderField.DecType.Complex ) {
+                    if ( decField.ComplexDecoder != null ) {
+                        for( int elId = 0; elId < decField.NoElements; elId++ ) {
+                            decField.ComplexDecoder[elId].ClearRaws();
+                        }
+                        continue;
+                    }
+                }
+                
+                decField.Raw = null;
+                decField.Value = null;
+            }
         }
         
         
@@ -63,68 +132,60 @@ namespace decoder {
             
             if ( arrIn.Length <= 0 ) { return false; }
             if ( this._fields == null ) { return status; }
-            Array.Clear( this._rawBytes, 0, this._rawBytes.Length );
-            Array.Copy( arrIn, _rawBytes, Math.Min( arrIn.Length, _rawBytes.Length ) );
+            Array.Clear( this.RawBytes, 0, this.RawBytes.Length );
+            Array.Copy( arrIn, RawBytes, Math.Min( arrIn.Length, RawBytes.Length ) );
             
             int idByte = 0;
             int idBit = 0;
+            return this.TryDecodeInternal( ref this.RawBytes, ref idByte, ref idBit );
+        }
+        
+        
+        protected bool TryDecodeInternal(ref Byte[] arrIn, ref int idByte, ref int idBit) {
+            bool status = false;
             int bi = 0;
-            int By = _rawBytes[0];
+            int By = arrIn[idByte];
+            
+            By = By >> ( bi % 8 );
+            
+            ClearRaws();
             
             foreach ( DecoderField decField in this._fields ) {
-                decField.Raw = 0;
-                decField.Value = null;
-            }
-            
-            foreach ( DecoderField decField in this._fields ) {
-                if ( decField.NoElements > 1 ) {
-                    if ( decField.Value == null ) {
-                        /* No array, so create one */
-//                        object[] tempArr = new object[decField.NoElements];
-                        decField.Value = new object[decField.NoElements];
-                    }
-                    
-                    for ( int elId = 0; elId < decField.NoElements; elId++ ) {
-                        UInt64 elRaw = 0;
-                        for ( int bitIdInEl = 0; bitIdInEl < decField.SizeBits; bitIdInEl++ ) {
-                            if ( idBit >= 8 ) {
-                                idBit = 0; idByte++;
-                                
-                                if ( idByte > _rawBytes.Length ) { break; }
-                                
-                                By = _rawBytes[idByte];
-                            }
-                            bi = By & 1;
-                            By = By >> 1;
-                            idBit++;
-                            
-                            if ( bi == 1 ) {
-                                elRaw = elRaw + (UInt64)(bi << bitIdInEl);
-                            }
+                if ( decField.Value == null ) {
+                    /* No array, so create one */
+                    decField.Value = new object[decField.NoElements];
+                    decField.Raw = new ulong[decField.NoElements];
+                }
+                
+                if ( decField.Type == DecoderField.DecType.Complex ) {
+                    if ( decField.ComplexDecoder != null ) {
+                        for ( int elId = 0; elId < decField.NoElements; elId++ ) {
+                            decField.ComplexDecoder[elId].TryDecodeInternal( ref arrIn, ref idByte, ref idBit );
                         }
-//                        try {
-                            (((object[])decField.Value)[elId]) = (object)elRaw;
-//                        } catch {}
+                        continue;
                     }
-                } else {
-                    for ( int bitIdInField = 0; bitIdInField < decField.NoBits; bitIdInField++ ) {
+                }
+                
+                /* Decode as array (because everything is an array)*/
+                for ( int elId = 0; elId < decField.NoElements; elId++ ) {
+                    UInt64 elRaw = 0;
+                    for ( int bitIdInEl = 0; bitIdInEl < decField.NoBits; bitIdInEl++ ) {
                         if ( idBit >= 8 ) {
                             idBit = 0; idByte++;
-                            
-                            if ( idByte > _rawBytes.Length ) { break; }
-                            
-                            By = _rawBytes[idByte];
+                            if ( idByte >= arrIn.Length ) { break; }
+                            By = arrIn[idByte];
                         }
                         bi = By & 1;
                         By = By >> 1;
                         idBit++;
                         
                         if ( bi == 1 ) {
-                            decField.Raw = (UInt64)decField.Raw + (UInt64)(bi << bitIdInField);
+                            elRaw = elRaw + (UInt64)(bi << bitIdInEl);
                         }
                     }
+                    decField.Raw[elId] = elRaw;   
                 }
-                if ( idByte > _rawBytes.Length ) { break; }
+                if ( idByte > arrIn.Length ) { break; }
             }
             
             foreach ( DecoderField decField in this._fields ) {
@@ -134,23 +195,50 @@ namespace decoder {
             return status;
         }
         
+        public int GetSizeBits() {
+            int totalBits = 0;
+            
+            foreach ( DecoderField decField in _fields ) {
+                totalBits += decField.SizeBits;
+            }
+            
+            return totalBits;
+        }
+        
     }
     
-    public class DecoderField {
+    public class DecoderField  : ICloneable {
         private static readonly string _pattern =
             @"(?<Type>[\w\s\*]+?)\s*(?<Name>\w+)(?:\s*\[\s*(?<ArrayLen>\d*)\s*\])?(?:\s*:\s*(?<Bits>\d+))?\s*;";
         private static readonly Regex _rgxFieldC = new Regex(_pattern, RegexOptions.Compiled);
         private static readonly Regex _rgxSpaceCutter = new Regex(@"\s+", RegexOptions.Compiled);
         private static readonly Regex _rgxNumberInStr = new Regex(@"\d+", RegexOptions.Compiled);
         
-        public static List<DecoderField> TryDecodeField(string strFieldC) {
+        
+        #region ICloneable implementation
+        public object Clone () {
+            DecoderField decField = new DecoderField();
+            
+            decField._sizeBits = this._sizeBits;
+            decField.IsPointer  = this.IsPointer;
+            decField.IsSignedU2 = this.IsSignedU2;
+            decField.Name = this.Name;
+            decField.NoBits = this.NoBits;
+            decField.NoElements = this.NoElements;
+            decField.Type = this.Type;
+            decField.Raw = null;
+            decField.Value = null;
+            return decField;
+        }
+        #endregion
+        
+        
+        public static List<DecoderField> TryDecodeField(string strFieldC, List<Decoder>otherDecoders) {
             List<DecoderField> fields = new List<DecoderField>();
             /* Decode field from string liek this:
              "uint8_t name : 32; //! some comments"
              so formatter look like this:
              "{type} {name} [:noBits];" */
-            
-            strFieldC = strFieldC.Replace("\t", " ");
 
             foreach ( Match m in _rgxFieldC.Matches(strFieldC) ) {
                 if ( !m.Success ) { continue; }
@@ -169,7 +257,7 @@ namespace decoder {
                 strArrSize  = _rgxSpaceCutter.Replace( strArrSize, " " );
                 strNoBits   = _rgxSpaceCutter.Replace( strNoBits, " " );
                 
-                decField.ParseTypeFromString(strType);
+                decField.ParseTypeFromString(strType, otherDecoders);
                 decField.Name = strName;
                 
                 if ( !decField.IsPointer ) {
@@ -188,6 +276,13 @@ namespace decoder {
                     noElements = GetIntFromString(strArrSize, noElements);
                 }
                 decField.NoElements = noElements;
+                if ( decField.ComplexDecoder != null ) {
+                    Decoder baseDec = decField.ComplexDecoder[0];
+                    decField.ComplexDecoder = new Decoder[decField.NoElements];
+                    for( int elId = 0; elId < decField.NoElements; elId++ ) {
+                        decField.ComplexDecoder[elId] = (Decoder)baseDec.Clone();
+                    }
+                }
                 fields.Add( decField );
             }
             
@@ -199,90 +294,82 @@ namespace decoder {
             FloatingPoint,
             Char,
             Void,
+            Complex,
         };
         
         public string   Name;
-        public UInt64   Raw;
+        public UInt64[] Raw;
         public object   Value;
         
-        public int      SizeBits;
+        private int     _sizeBits = 0;
+        public int      SizeBits {
+            get {
+                if ( this.Type == DecType.Complex ) {
+                    if ( this.ComplexDecoder != null ) {
+                        return this.ComplexDecoder[0].GetSizeBits() * this.NoElements;
+                    }
+                }
+                return _sizeBits;
+            }
+        }
+        
         public int      NoBits;
         public int      NoElements;
         public DecType  Type        = DecType.Integer;
         public bool     IsSignedU2  = true;
         public bool     IsPointer   = false;
         
+        public Decoder[]  ComplexDecoder = null;
+        
         public DecoderField() { }
         
-        
-        public Type GetFieldType() {
-            if ( this.IsPointer ) {
-                switch ( this.SizeBits ) {
-                    case  8: return this.NoElements > 1 ? typeof(byte[]) : typeof(byte);
-                    case 16: return this.NoElements > 1 ? typeof(UInt16[]) : typeof(UInt16);
-                    case 64: return this.NoElements > 1 ? typeof(UInt64[]) : typeof(UInt64);
-                    default: return this.NoElements > 1 ? typeof(UInt32[]) : typeof(UInt32);
+        private void ParseTypeFromString(string strType, List<Decoder>otherDecoders) {
+            strType = strType.Trim(' ');
+            this.IsPointer  = strType.EndsWith("*");
+            strType = strType.Replace("*", "");
+            strType = strType.Trim(' ').ToLower();
+            
+            if          ( strType.Equals("float") || strType.Equals("single") ) {
+                this.Type = DecType.FloatingPoint;
+                this._sizeBits = 32;
+            } else if   ( strType.Equals("double") ) {
+                this.Type = DecType.FloatingPoint;
+                this._sizeBits = 64;
+            } else if   ( strType.Equals("char") ) {
+                this.Type = DecType.Char;
+                this._sizeBits = 8;
+            } else if   ( strType.Equals("void") ) {
+                this.Type = DecType.Void;
+                this._sizeBits = 32;
+            } else {
+                bool foundDec = false;
+                foreach ( Decoder dec in otherDecoders ) {
+                    if ( dec.Name.ToLower().Equals( strType ) ) {
+                        foundDec = true;
+                        this.Type = DecType.Complex;
+                        this.ComplexDecoder = new Decoder[1];
+                        this.ComplexDecoder[0] = dec;
+                        break;
+                    }
+                }
+                
+                if ( !foundDec ) {
+                    this.Type = DecType.Integer;
+                    this.IsSignedU2 = !strType.StartsWith("u");
                 }
             }
             
-            switch ( this.Type ) {
-                case DecType.FloatingPoint:
-                    if ( this.SizeBits == 32 ) { return this.NoElements > 1 ? typeof(float[]) : typeof(float); }
-                    return this.NoElements > 1 ? typeof(double[]) : typeof(double);
-                case DecType.Char:
-                    return this.NoElements > 1 ? typeof(char[]) : typeof(char);
-                default:
-
-                    if ( this.IsSignedU2 ) {
-                        switch ( this.SizeBits ) {
-                                case 64: return this.NoElements > 1 ? typeof(Int64[]) : typeof(Int64);
-                                case 32: return this.NoElements > 1 ? typeof(Int32[]) : typeof(Int32);
-                                case 16: return this.NoElements > 1 ? typeof(Int16[]) : typeof(Int16);
-                                default: return this.NoElements > 1 ? typeof(sbyte[]) : typeof(sbyte);
-                        }
-                    }
-                    
-                    switch ( this.SizeBits ) {
-                        case 64: return this.NoElements > 1 ? typeof(UInt64[]) : typeof(UInt64);
-                        case 32: return this.NoElements > 1 ? typeof(UInt32[]) : typeof(UInt32);
-                        case 16: return this.NoElements > 1 ? typeof(UInt16[]) : typeof(UInt16);
-                        default: return this.NoElements > 1 ? typeof(byte  []) : typeof(byte  );
-                    }
-            }
-        }
-        
-        private void ParseTypeFromString(string strType) {
-            strType = strType.Trim(' ').ToLower();
             
-            this.IsPointer  = strType.Contains("*");
-            if ( this.IsPointer ) { this.SizeBits = 32; }
-            
-            if          ( strType.Contains("float") || strType.Contains("single") ) {
-                this.Type = DecType.FloatingPoint;
-                this.SizeBits = 32;
-            } else if   ( strType.Contains("double") ) {
-                this.Type = DecType.FloatingPoint;
-                this.SizeBits = 64;
-            } else if   ( strType.Contains("char") ) {
-                this.Type = DecType.Char;
-                this.SizeBits = 8;
-            } else if   ( strType.Contains("void") ) {
-                this.Type = DecType.Void;
-                this.SizeBits = 32;
-            } else {
-                this.Type = DecType.Integer;
-                this.IsSignedU2 = !strType.StartsWith("u");
-            }
-            
+            if ( this.IsPointer ) { this._sizeBits = 32; }
             
             /* GetNumberOfBits form type's name */
             Match m = _rgxNumberInStr.Match( strType );
             try {
                 if ( m.Success ) {
-                    this.SizeBits = Convert.ToInt32( m.Value );
+                    this._sizeBits = Convert.ToInt32( m.Value );
                 }
             } catch {
-                this.SizeBits = 0;
+                this._sizeBits = 0;
             }
         }
         
@@ -327,11 +414,11 @@ namespace decoder {
             
             switch ( this.Type ) {
                 case DecType.FloatingPoint:
-                    if ( this.SizeBits == 64 )  { strType += "double"; }
+                    if ( this._sizeBits == 64 )  { strType += "double"; }
                     else                        { strType += "float"; }
                     
-                    if ( ( this.SizeBits == 64 ) && ( this.SizeBits == 32 ) ) {
-                        strType += this.SizeBits;
+                    if ( ( this._sizeBits == 64 ) && ( this._sizeBits == 32 ) ) {
+                        strType += this._sizeBits;
                     }
                     
                     break;
@@ -340,8 +427,14 @@ namespace decoder {
                 case DecType.Void:
                     strType += "void"; break;
                 default:
+                    if ( this.Type == DecType.Complex ) {
+                        if ( this.ComplexDecoder != null ) {
+                            strType += this.ComplexDecoder[0].Name; break;
+                        }
+                    }
+                    
                     strType += "int";
-                    strType += this.SizeBits;
+                    strType += this._sizeBits;
                     strType += " : " + this.NoBits;
                     break;
             }
@@ -351,46 +444,54 @@ namespace decoder {
         
         
         public void ConvertRawToVal() {
-            if ( this.NoElements > 1 ) {
-                /* This is an array, so just quit, because previous call should write to Value as "object[]" */
-                return;
-            }
-            
-            this.Value = this.Raw;
-            if ( this.IsPointer ) { return; }
-            
             try {
                 switch ( this.Type ) {
                     case DecType.Char:
-                        this.Value = (char)this.Raw;
+                        for ( int idx = 0; idx < this.NoElements; idx++ ) {
+                            ((object[])this.Value)[idx] = (object)this.Raw[idx];
+                        }
                         break;
                     
                     case DecType.FloatingPoint:
-                        if ( this.SizeBits == 64 ) {
-                            unsafe {
-                                fixed (ulong* pRawDouble = &this.Raw) {
-                                    this.Value = *(double*)pRawDouble;
+                        for ( int idx = 0; idx < this.NoElements; idx++ ) {
+                            if ( this._sizeBits == 64 ) {
+                                unsafe {
+                                    fixed (ulong* pRawDouble = &( this.Raw[idx] ) ) {
+                                        ((object[])this.Value)[idx] = (object)(*(double*)pRawDouble);
+                                    }
                                 }
-                            }
-                        } else if ( this.SizeBits == 32 ) {
-                            uint rawInt32 = (uint)this.Raw;
-                            unsafe {
-                                fixed (ulong* pRawFloat = &this.Raw) {
-                                    this.Value = *(float*)pRawFloat;
+                            } else if ( this._sizeBits == 32 ) {
+                                uint rawInt32 = (uint)this.Raw[idx];
+                                unsafe {
+                                    fixed (ulong* pRawFloat = &this.Raw[idx]) {
+                                        ((object[])this.Value)[idx] = (object)(*(float*)pRawFloat);
+                                    }
                                 }
                             }
                         }
                         break;
                     
                     case DecType.Void:
-                        this.Value = (char)this.Raw;
+                        for ( int idx = 0; idx < this.NoElements; idx++ ) {
+                            ((object[])this.Value)[idx] = this.Raw[idx];
+                        }
                         break;
                         
                     case DecType.Integer:
-                        this.Value = InterpretBits( (ulong)this.Raw, this.IsSignedU2, this.SizeBits );
+                        for ( int idx = 0; idx < this.NoElements; idx++ ) {
+                            ((object[])this.Value)[idx] = InterpretBits( (ulong)this.Raw[idx], this.IsSignedU2, this._sizeBits );
+                        }
                         break;
+                    default:
+                        this.Value = this.Raw; break;
                 }
-            } catch {}
+                
+                if ( this.IsPointer ) {
+                    for ( int idx = 0; idx < this.NoElements; idx++ ) {
+                        ((object[])this.Value)[idx] = this.Raw[idx];
+                    }
+                }
+            } catch ( Exception ex ) {}
         }
         
         

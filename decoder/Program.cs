@@ -18,39 +18,39 @@ namespace decoder {
             if ( opt.help    != null ) { CommandLineParser.CommandLineParser.PrintHelp<Options>(); }
             if ( opt.version != null ) { CommandLineParser.CommandLineParser.PrintVersion<Options>(); }
             
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            MainListener listener = new MainListener();
+            
             string strStructC1 = "" +
-                "typedef struct {" +
-//                "    uint8_t  Sync1;" +
-//                "    uint8_t  Sync2;" +
-//                "    uint8_t  Class;" +
-//                "    uint8_t  Id;" +
-//                "    uint16_t  Length;" +
-//                "    uint32_t  iTow;" +
-//                "    uint16_t  year;" +
-//                "    uint8_t   month;" +
-//                "    uint8_t   day;" +
-//                
-//                "    uint16_t siemka : 4;" +
-//                "    uint16_t reserved : 12;" +
-//                "    float    *pFloat; \\ wskaznik do floatu!" +
-//                "    char*    pName; /* Nazwa */" +
+                "struct testStruct_t{" +
                 "    char     Name[10]; /* Nazwa2 */" +
                 "    char     Name[10]; /* Nazwa2 */" +
                 "    char     Name[10]; /* Nazwa2 */" +
                 "    char     Name[10]; /* Nazwa2 */" +
                 "    char     Name[10]; /* Nazwa2 */" +
                 "    char     Name[10]; /* Nazwa2 */" +
-                "} testStruct_t;";
+                "};";
             
             Decoder dec1 = new Decoder( strStructC1 );
+            listener.AddDecoder( ref dec1 );
             
-            string strStructC2 = "" +
+            string strStructHeader = "" +
                 "typedef struct {" +
                 "    uint8_t  Sync1;" +
                 "    uint8_t  Sync2;" +
                 "    uint8_t  Class;" +
                 "    uint8_t  Id;" +
                 "    uint16_t  Length;" +
+                "} header_t;";
+            
+            Decoder decHeader = new Decoder( strStructHeader /*, "header_t"*/ );
+            listener.AddDecoder( ref decHeader );
+            
+            string strStructC2 = "" +
+                "typedef struct {" +
+                "    header_t header[2];" +
+                
                 "    uint32_t  iTow;" +
                 "    uint16_t  year;" +
                 "    uint8_t   month;" +
@@ -61,20 +61,18 @@ namespace decoder {
                 "    float    *pFloat; \\ wskaznik do floatu!" +
                 "    char*    pName; /* Nazwa */" +
                 "    char     Name[10]; /* Nazwa2 */" +
-                "} testStruct_t;";
+                "} msg_t;";
             
             Decoder dec2 = new Decoder( strStructC2 );
+            
+            listener.AddDecoder( ref dec2 );
+            Application.Run( listener );
             
 //            Form1 frm = new Form1();
 ////            frm.BindDecoder( ref dec1 );
 //            frm.AddDecoder( ref dec1 );
 //            frm.AddDecoder( ref dec2 );
-            
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-//            Application.Run(frm);
-            Application.Run( new MainListener() );
-            
+
         }
     }
 }

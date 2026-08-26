@@ -75,9 +75,9 @@
     <Compile Include="AdvancedKey.cs" />
     <Compile Include="AppInfo.cs" />
     <Compile Include="Decoder.cs" />
-    <Compile Include="Form1.cs" />
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="DecoderGui.cs" />
+    <Compile Include="DecoderGui.Designer.cs">
+      <DependentUpon>DecoderGui.cs</DependentUpon>
     </Compile>
     <Compile Include="MainListener.cs" />
     <Compile Include="MainListener.Designer.cs">
@@ -96,8 +96,8 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="DecoderGui.resx">
+      <DependentUpon>DecoderGui.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainListener.resx">
       <DependentUpon>MainListener.cs</DependentUpon>

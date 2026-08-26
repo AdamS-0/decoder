@@ -27,11 +27,8 @@ namespace decoder {
         
         ContextMenuStrip _leftMenu = new ContextMenuStrip();
         
-        private string strCtrlC = "";
-        
-        List<Form1> _decGui = new List<Form1>();
-        
-        Form1 _curDecGui = null;
+        static List<DecoderGui> _decGui = new List<DecoderGui>();
+        static DecoderGui _curDecGui = null;
         
         public MainListener() {
             InitializeComponent();
@@ -90,21 +87,27 @@ namespace decoder {
         }
         
         
+        public void AddDecoder(ref Decoder decNew) {
+            DecoderGui decGui = GetCurrGui();
+            decGui.AddDecoder( ref decNew );
+        }
         
-        private Form1 AddNewGui() {
-            Form1 newDecGui = new Form1();
-            newDecGui.Activated += delegate (object sender, EventArgs e) { _curDecGui = (Form1)sender; };
+        private static DecoderGui AddNewGui() {
+            DecoderGui newDecGui = new DecoderGui();
+            newDecGui.Activated += delegate (object sender, EventArgs e) { _curDecGui = (DecoderGui)sender; };
             _decGui.Add( newDecGui );
             _curDecGui = newDecGui;
             return newDecGui;
         }
         
-        private Form1 GetCurrGui() {
+        public static DecoderGui GetCurrGui() {
             if ( _curDecGui == null ) {
-                return AddNewGui();
+                DecoderGui newGui = AddNewGui();
+                newGui.Show();
+                return newGui;
             }
             
-            foreach ( Form1 gui in _decGui ) {
+            foreach ( DecoderGui gui in _decGui ) {
                 if ( gui.ContainsFocus ) {
                     return gui;
                 }
@@ -124,7 +127,7 @@ namespace decoder {
             
             Decoder dec = new Decoder( strPattern );
             if ( dec != null ) {
-                Form1 gui = GetCurrGui();
+                DecoderGui gui = GetCurrGui();
                 gui.AddDecoder( ref dec );
                 gui.Show();
                 gui.TryParseRawData();
@@ -135,7 +138,7 @@ namespace decoder {
             _leftMenu.Hide();
             string strData = GetSelectedText();
             _leftMenu.Close();
-            Form1 gui = GetCurrGui();
+            DecoderGui gui = GetCurrGui();
             gui.SetRawDataAndTryParse( strData );
         }
         
