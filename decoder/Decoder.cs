@@ -180,7 +180,13 @@ namespace decoder {
                         idBit++;
                         
                         if ( bi == 1 ) {
-                            elRaw = elRaw + (UInt64)(bi << bitIdInEl);
+                            try {
+                                unchecked {
+                                    elRaw = elRaw + (UInt64)(1UL << bitIdInEl);
+                                }
+                            } catch (Exception ex) {
+                                int dummyInt22 = 0;
+                            }
                         }
                     }
                     decField.Raw[elId] = elRaw;   
@@ -228,6 +234,16 @@ namespace decoder {
             decField.Type = this.Type;
             decField.Raw = null;
             decField.Value = null;
+            
+            if ( this.Type == DecType.Complex ) {
+                if ( this.ComplexDecoder != null ) {
+                    decField.ComplexDecoder = new Decoder[this.NoElements];
+                    for( int idx = 0; idx < this.NoElements; idx++ ) {
+                        decField.ComplexDecoder[idx] = (Decoder)this.ComplexDecoder[idx].Clone();
+                    }
+                }
+            }
+            
             return decField;
         }
         #endregion
@@ -265,17 +281,18 @@ namespace decoder {
                     decField.IsPointer = decField.Name.StartsWith("*");
                 }
                 
+                int noElements = 1;
+                if ( strArrSize.Length > 0 ) {
+                    noElements = GetIntFromString(strArrSize, noElements);
+                }
+                decField.NoElements = noElements;
+                
                 int noBits = decField.SizeBits;
                 if ( strNoBits.Length > 0 ) {
                     noBits = GetIntFromString(strNoBits, noBits);
                 }
                 decField.NoBits = noBits;
                 
-                int noElements = 1;
-                if ( strArrSize.Length > 0 ) {
-                    noElements = GetIntFromString(strArrSize, noElements);
-                }
-                decField.NoElements = noElements;
                 if ( decField.ComplexDecoder != null ) {
                     Decoder baseDec = decField.ComplexDecoder[0];
                     decField.ComplexDecoder = new Decoder[decField.NoElements];
@@ -306,7 +323,7 @@ namespace decoder {
             get {
                 if ( this.Type == DecType.Complex ) {
                     if ( this.ComplexDecoder != null ) {
-                        return this.ComplexDecoder[0].GetSizeBits() * this.NoElements;
+                        return this.ComplexDecoder[0].GetSizeBits();
                     }
                 }
                 return _sizeBits;
@@ -349,6 +366,7 @@ namespace decoder {
                         this.Type = DecType.Complex;
                         this.ComplexDecoder = new Decoder[1];
                         this.ComplexDecoder[0] = dec;
+                        this._sizeBits = this.ComplexDecoder[0].GetSizeBits();
                         break;
                     }
                 }
@@ -448,7 +466,7 @@ namespace decoder {
                 switch ( this.Type ) {
                     case DecType.Char:
                         for ( int idx = 0; idx < this.NoElements; idx++ ) {
-                            ((object[])this.Value)[idx] = (object)this.Raw[idx];
+                            ((object[])this.Value)[idx] = "'" + (char)this.Raw[idx] + "'";
                         }
                         break;
                     
@@ -501,7 +519,7 @@ namespace decoder {
 
             if ( numOfBits == 64 ) {
                 if ( isSigned ) {
-                    return (long)raw;
+                    return unchecked((long)raw);
                 }
                 return raw;
             }
@@ -517,9 +535,9 @@ namespace decoder {
                 ulong higherBitsMask = ~mask;
                 ulong negativeRaw = maskedValue | higherBitsMask;
 
-                return (long)negativeRaw;
+                return unchecked((long)negativeRaw);
             }
-            return (long)maskedValue;
+            return unchecked((long)maskedValue);
         }
         
         

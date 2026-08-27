@@ -34,9 +34,25 @@ namespace decoder {
                 node.AddSubitem( decField.GetTypeAsString() );
                 node.AddSubitem( decField.GetSizeInBits().ToString() );
                 
+                if ( ( decField.NoElements > 1 ) && ( decField.Type == DecoderField.DecType.Char ) ) {
+                    TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
+                    subItemValCharArr.ShowRelatedObject = true;
+                    subItemValCharArr.GetRelatedObject = delegate() {
+                        try {
+                            string strCharArr = "\"";
+                            for ( int idx = 0; idx < decField.NoElements; idx++ ) {
+                                strCharArr += (char)decField.Raw[idx];
+                            }
+                            return strCharArr + "\"";
+                        } catch {}
+                        return "---";
+                    };
+                }
+                
+                int numberOfNibbles = ( ( decField.NoBits - 1) / 4 ) + 1;
                 for( int elId = 0; elId < decField.NoElements; elId++ ) {
                     TreeDetailsViewItem nodeI = node;
-                    if ( decField.NoElements > 1 ) {
+                    if ( decField.NoElements > 1 ) {                        
                         nodeI = node.AddSubNode( decField.Name + "[" + elId + "]" );
                         nodeI.AddSubitem( decField.GetElementTypeAsString() );
                         nodeI.AddSubitem( decField.SizeBits.ToString() );
@@ -57,8 +73,8 @@ namespace decoder {
                         subItemRaw.Tag = elId;
                         subItemRaw.GetRelatedObject = delegate() {
                             try {
-                                object obj = ((object[])decField.Value)[ (int)subItemRaw.Tag ];
-                                return "0x" + ((UInt64)obj).ToString("X8");
+                                object obj = ((ulong[])decField.Raw)[ (int)subItemRaw.Tag ];
+                                return "0x" + ((UInt64)obj).ToString("X" + numberOfNibbles);
                             } catch {}
                             return "---";
                         };
