@@ -12,7 +12,7 @@ using System.Windows.Forms;
 namespace decoder {
     class Program {
         [STAThread]
-        private static void Main(string[] args) {            
+        private static void Main(string[] args) {
             Options opt = CommandLineParser.CommandLineParser.ParseArguments<Options>(args);
             
             if ( opt.help    != null ) { CommandLineParser.CommandLineParser.PrintHelp<Options>(); }
