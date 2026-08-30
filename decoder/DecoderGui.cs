@@ -24,15 +24,86 @@ namespace decoder {
         
         public DecoderGui() {
             InitializeComponent();
-
+            structInfoView1.ItemMouseEnter += ItemMouseEnter;
         }
         
+        private void ItemMouseEnter( object sender, EventArgs e ) {
+            TreeDetailsViewItem node = sender as TreeDetailsViewItem;
+            try {
+                Text = node.Text + ", BitOffset: " + node.Tag2 + ", bitSize: " + node.Tag3;
+            } catch {
+                Text = node.Text;
+            }
+            
+            try {
+                int bitOffsetStart = (int)node.Tag2;
+                int bitOffsetStop = bitOffsetStart + (int)node.Tag3 - 1;
+                
+                int byteId = 0;
+                int bitId = 0;
+                char lastCorrectChar = ' ';
+                bool isMsbNibble = true;
+                
+                bitOffsetStart  = ( ( bitOffsetStart ) / 4 ) * 4;
+                bitOffsetStop   = ( ( bitOffsetStop ) / 4 ) * 4;
+                
+                Text = node.Text + ", BitOffset: " + node.Tag2 + ", bitSize: " + node.Tag3 + "/" + "Start: " + bitOffsetStart + ", Stop: " + bitOffsetStop;
+                
+                int idxCorrectCharLast = -1;
+                
+                rtbRawData.Select( 0, rtbRawData.Text.Length );
+                rtbRawData.SelectionColor = SystemColors.WindowText;
+                
+                for ( int idx = 0; idx < rtbRawData.Text.Length; idx++ ) {
+                    char c = rtbRawData.Text[idx];
+                    if ( !( ( ( c >= '0' ) && ( c <= '9' ) ) ||
+                            ( ( c >= 'a' ) && ( c <= 'f' ) ) ||
+                            ( ( c >= 'A' ) && ( c <= 'F' ) ) || ( c == ' ' ) ) )
+                    {
+                        continue;
+                    }
+                    
+                    int idxToColor = 0;
+                    if ( c == ' ' ) {
+                        if ( !isMsbNibble ) {
+                            /* Previously was Lsb nibble! e.g. "AA B_78" */
+                            idxToColor = idxCorrectCharLast;
+                        } else { idxToColor = -1; }
+                        isMsbNibble = true;
+                    } else {
+                        bitId = byteId * 8 + ( isMsbNibble ? 4 : 0 );
+                        idxToColor = idx;
+                    }
+                    
+                    /* found correct nibble */
+                    if ( ( idxToColor >= 0 ) && ( idxToColor < rtbRawData.Text.Length ) ) {
+                        if ( ( bitId >= bitOffsetStart ) && ( bitId <= bitOffsetStop ) ) {
+                            rtbRawData.Select( idxToColor, 1 );
+                            rtbRawData.SelectionColor = Color.Red;
+                        }
+                    }
+                    
+                    if ( bitId > ( bitOffsetStop + 8 ) ) { break; }
+                    
+                    if ( c != ' ' ) {
+                        isMsbNibble = !isMsbNibble;
+                        if ( isMsbNibble ) { byteId++; }
+                    }
+                    idxCorrectCharLast = idx;
+                }
+                
+                rtbRawData.DeselectAll();
+                
+            } catch (Exception ex) {}
+        }
 
-        private void BindDecoderSub(Decoder dec, TreeDetailsViewItem parentNode = null ) {
+        private void BindDecoderSub(Decoder dec, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
             foreach ( DecoderField decField in dec._fields ) {
                 TreeDetailsViewItem node = parentNode == null ? structInfoView1.AddNode( decField.Name ) : parentNode.AddSubNode( decField.Name );
                 node.AddSubitem( decField.GetTypeAsString() );
                 node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
+                node.Tag2 = bitOffset;
+                node.Tag3 = decField.GetTotalSizeInBits();
                 
                 if ( ( decField.NoElements > 1 ) && ( decField.Type == DecoderField.DecType.Char ) ) {
                     TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
@@ -56,11 +127,15 @@ namespace decoder {
                         nodeI = node.AddSubNode( decField.Name + "[" + elId + "]" );
                         nodeI.AddSubitem( decField.GetElementTypeAsString() );
                         nodeI.AddSubitem( decField.ElementSizeBits.ToString() );
+                        nodeI.Tag3 = (int)decField.ElementSizeBits;
+                    
                     }
+                    
+                    nodeI.Tag2 = bitOffset;
                     
                     if ( decField.Type == DecoderField.DecType.Complex ) {
                         if ( decField.ComplexDecoder != null ) {
-                            BindDecoderSub( decField.ComplexDecoder[elId], nodeI );
+                            BindDecoderSub( decField.ComplexDecoder[elId], ref bitOffset, nodeI );
                         }
                     } else {
                         TreeDetailsViewSubItem subItemVal = nodeI.AddSubitem( "[...]" );
@@ -78,6 +153,8 @@ namespace decoder {
                             } catch {}
                             return "---";
                         };
+                        
+                        bitOffset += decField.NoBitsUsed;
                     }
                 }
 
@@ -88,7 +165,8 @@ namespace decoder {
         public void BindDecoder(Decoder dec) {
             _decCurrent = dec;
             structInfoView1.Nodes.Clear();
-            BindDecoderSub( dec );
+            int bitOffset = 0;
+            BindDecoderSub( dec, ref bitOffset );
             structInfoView1.Refresh();
             
         }
@@ -118,7 +196,7 @@ namespace decoder {
                 strData = strData.Replace("\t", "");
                 
                 Byte[] dataBytes = StringToByteArray(strData);
-                _decCurrent.TryDecode( dataBytes );
+                _decCurrent.TryDecodeData( dataBytes );
                 structInfoView1.Refresh();
             } catch (Exception ex) { }
         }

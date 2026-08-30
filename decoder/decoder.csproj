@@ -78,6 +78,9 @@
     <Compile Include="AdvancedKey.cs" />
     <Compile Include="AppInfo.cs" />
     <Compile Include="Decoder.cs" />
+    <Compile Include="Decoder.static.cs">
+      <DependentUpon>Decoder.cs</DependentUpon>
+    </Compile>
     <Compile Include="DecoderField.cs" />
     <Compile Include="DecoderField.static.cs">
       <DependentUpon>DecoderField.cs</DependentUpon>

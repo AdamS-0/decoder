@@ -70,7 +70,7 @@ namespace decoder {
             set { Bitmask.Set( ref _mask, 32, 16, value ); }
         }
         
-        private ushort  _elementSzeBits {
+        private ushort  _elementSizeBits {
             get { return (ushort)Bitmask.Get(_mask, 16, 16); }
             set { Bitmask.Set( ref _mask, 16, 16, value ); }
         }
@@ -83,10 +83,10 @@ namespace decoder {
             get {
                 if ( this.Type == DecType.Complex ) {
                     if ( this.ComplexDecoder != null ) {
-                        return this.ComplexDecoder[0].GetSizeBits();
+                        return this.ComplexDecoder[0].GetStructSizeBits();
                     }
                 }
-                return _elementSzeBits;
+                return _elementSizeBits;
             }
         }
         
@@ -118,16 +118,16 @@ namespace decoder {
             
             if          ( strType.Equals("float") || strType.Equals("single") ) {
                 this.Type = DecType.FloatingPoint;
-                this._elementSzeBits = 32;
+                this._elementSizeBits = 32;
             } else if   ( strType.Equals("double") ) {
                 this.Type = DecType.FloatingPoint;
-                this._elementSzeBits = 64;
+                this._elementSizeBits = 64;
             } else if   ( strType.Equals("char") ) {
                 this.Type = DecType.Char;
-                this._elementSzeBits = 8;
+                this._elementSizeBits = 8;
             } else if   ( strType.Equals("void") ) {
                 this.Type = DecType.Void;
-                this._elementSzeBits = 32;
+                this._elementSizeBits = 32;
             } else {
                 bool foundDec = false;
                 foreach ( Decoder dec in otherDecoders ) {
@@ -136,7 +136,7 @@ namespace decoder {
                         this.Type = DecType.Complex;
                         this.ComplexDecoder = new Decoder[1];
                         this.ComplexDecoder[0] = dec;
-                        this._elementSzeBits = this.ComplexDecoder[0].GetSizeBits();
+                        this._elementSizeBits = this.ComplexDecoder[0].GetStructSizeBits();
                         break;
                     }
                 }
@@ -148,16 +148,16 @@ namespace decoder {
             }
             
             
-            if ( this.IsPointer ) { this._elementSzeBits = 32; }
+            if ( this.IsPointer ) { this._elementSizeBits = 32; }
             
             /* GetNumberOfBits form type's name */
             Match m = _rgxNumberInStr.Match( strType );
             try {
                 if ( m.Success ) {
-                    this._elementSzeBits = Convert.ToUInt16( m.Value );
+                    this._elementSizeBits = Convert.ToUInt16( m.Value );
                 }
             } catch {
-                this._elementSzeBits = 0;
+                this._elementSizeBits = 0;
             }
         }
         
@@ -188,11 +188,11 @@ namespace decoder {
             
             switch ( this.Type ) {
                 case DecType.FloatingPoint:
-                    if ( this._elementSzeBits == 64 )  { strType += "double"; }
+                    if ( this._elementSizeBits == 64 )  { strType += "double"; }
                     else                        { strType += "float"; }
                     
-                    if ( ( this._elementSzeBits == 64 ) && ( this._elementSzeBits == 32 ) ) {
-                        strType += this._elementSzeBits;
+                    if ( ( this._elementSizeBits == 64 ) && ( this._elementSizeBits == 32 ) ) {
+                        strType += this._elementSizeBits;
                     }
                     
                     break;
@@ -208,7 +208,7 @@ namespace decoder {
                     }
                     
                     strType += "int";
-                    strType += this._elementSzeBits;
+                    strType += this._elementSizeBits;
                     strType += " : " + this.NoBitsUsed;
                     break;
             }
@@ -228,13 +228,13 @@ namespace decoder {
                     
                     case DecType.FloatingPoint:
                         for ( int idx = 0; idx < this.NoElements; idx++ ) {
-                            if ( this._elementSzeBits == 64 ) {
+                            if ( this._elementSizeBits == 64 ) {
                                 unsafe {
                                     fixed (ulong* pRawDouble = &( this.Raw[idx] ) ) {
                                         ((object[])this.Value)[idx] = (object)(*(double*)pRawDouble);
                                     }
                                 }
-                            } else if ( this._elementSzeBits == 32 ) {
+                            } else if ( this._elementSizeBits == 32 ) {
                                 uint rawInt32 = (uint)this.Raw[idx];
                                 unsafe {
                                     fixed (ulong* pRawFloat = &this.Raw[idx]) {
@@ -253,7 +253,7 @@ namespace decoder {
                         
                     case DecType.Integer:
                         for ( int idx = 0; idx < this.NoElements; idx++ ) {
-                            ((object[])this.Value)[idx] = InterpretBits( (ulong)this.Raw[idx], this.IsSignedU2, this._elementSzeBits );
+                            ((object[])this.Value)[idx] = InterpretBits( (ulong)this.Raw[idx], this.IsSignedU2, this._elementSizeBits );
                         }
                         break;
                     default:
