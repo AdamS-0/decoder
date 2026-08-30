@@ -50,6 +50,9 @@
     <Reference Include="CommandLineParser">
       <HintPath>..\CommandLineParser.dll</HintPath>
     </Reference>
+    <Reference Include="CsBitmask">
+      <HintPath>..\CsBitmask.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -75,6 +78,10 @@
     <Compile Include="AdvancedKey.cs" />
     <Compile Include="AppInfo.cs" />
     <Compile Include="Decoder.cs" />
+    <Compile Include="DecoderField.cs" />
+    <Compile Include="DecoderField.static.cs">
+      <DependentUpon>DecoderField.cs</DependentUpon>
+    </Compile>
     <Compile Include="DecoderGui.cs" />
     <Compile Include="DecoderGui.Designer.cs">
       <DependentUpon>DecoderGui.cs</DependentUpon>

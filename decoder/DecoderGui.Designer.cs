@@ -24,6 +24,7 @@ namespace decoder
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripButton tlStrpBtnRebuildPatterns;
         
         /// <summary>
         /// Disposes resources used by the form.
@@ -51,6 +52,7 @@ namespace decoder
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem3 = new VisBox.TreeDetailsViewColumnItem();
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem4 = new VisBox.TreeDetailsViewColumnItem();
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem5 = new VisBox.TreeDetailsViewColumnItem();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DecoderGui));
             this.structInfoView1 = new VisBox.TreeDetailsView();
             this.pMain = new System.Windows.Forms.Panel();
             this.splitter2 = new System.Windows.Forms.Splitter();
@@ -59,10 +61,12 @@ namespace decoder
             this.splitter1 = new System.Windows.Forms.Splitter();
             this.grpBxPatterns = new System.Windows.Forms.GroupBox();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.tlStrpBtnRebuildPatterns = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.pMain.SuspendLayout();
             this.grpBxRawData.SuspendLayout();
+            this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -166,11 +170,23 @@ namespace decoder
             // 
             // toolStrip1
             // 
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tlStrpBtnRebuildPatterns});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(544, 25);
             this.toolStrip1.TabIndex = 2;
             this.toolStrip1.Text = "toolStrip1";
+            // 
+            // tlStrpBtnRebuildPatterns
+            // 
+            this.tlStrpBtnRebuildPatterns.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tlStrpBtnRebuildPatterns.Image = ((System.Drawing.Image)(resources.GetObject("tlStrpBtnRebuildPatterns.Image")));
+            this.tlStrpBtnRebuildPatterns.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tlStrpBtnRebuildPatterns.Name = "tlStrpBtnRebuildPatterns";
+            this.tlStrpBtnRebuildPatterns.Size = new System.Drawing.Size(136, 22);
+            this.tlStrpBtnRebuildPatterns.Text = "Rebuild current pattern";
+            this.tlStrpBtnRebuildPatterns.Click += new System.EventHandler(this.TlStrpBtnRebuildPatternsClick);
             // 
             // statusStrip1
             // 
@@ -202,6 +218,8 @@ namespace decoder
             this.Text = "DecoderGui";
             this.pMain.ResumeLayout(false);
             this.grpBxRawData.ResumeLayout(false);
+            this.toolStrip1.ResumeLayout(false);
+            this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);

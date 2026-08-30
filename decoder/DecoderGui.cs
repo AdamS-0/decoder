@@ -32,7 +32,7 @@ namespace decoder {
             foreach ( DecoderField decField in dec._fields ) {
                 TreeDetailsViewItem node = parentNode == null ? structInfoView1.AddNode( decField.Name ) : parentNode.AddSubNode( decField.Name );
                 node.AddSubitem( decField.GetTypeAsString() );
-                node.AddSubitem( decField.GetSizeInBits().ToString() );
+                node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
                 
                 if ( ( decField.NoElements > 1 ) && ( decField.Type == DecoderField.DecType.Char ) ) {
                     TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
@@ -49,13 +49,13 @@ namespace decoder {
                     };
                 }
                 
-                int numberOfNibbles = ( ( decField.NoBits - 1) / 4 ) + 1;
+                int numberOfNibbles = ( ( decField.NoBitsUsed - 1) / 4 ) + 1;
                 for( int elId = 0; elId < decField.NoElements; elId++ ) {
                     TreeDetailsViewItem nodeI = node;
                     if ( decField.NoElements > 1 ) {                        
                         nodeI = node.AddSubNode( decField.Name + "[" + elId + "]" );
                         nodeI.AddSubitem( decField.GetElementTypeAsString() );
-                        nodeI.AddSubitem( decField.SizeBits.ToString() );
+                        nodeI.AddSubitem( decField.ElementSizeBits.ToString() );
                     }
                     
                     if ( decField.Type == DecoderField.DecType.Complex ) {
@@ -164,6 +164,12 @@ namespace decoder {
             
             BindDecoder( dec );
             _pushBtnMngr_decoder.OneElementChanged( pushBtn );
+        }
+        
+        
+        void TlStrpBtnRebuildPatternsClick ( object sender, EventArgs e ) {
+            _decCurrent.RebuildPattern();
+            BindDecoder( _decCurrent );
         }
         
         
