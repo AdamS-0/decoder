@@ -42,7 +42,7 @@ namespace decoder {
             _notifyIcon.ContextMenu = _notificationMenu;
             _notifyIcon.Visible = true;
             
-            _leftMenu.Items.Add( "New decoder", null, leftMenu_newDecoder );            
+            _leftMenu.Items.Add( "New decoder", null, leftMenu_newDecoder );
             _leftMenu.Items.Add( "Get pattern", null, leftMenu_getPattern );
             _leftMenu.Items.Add( "Get data", null, leftMenu_getData );
             
@@ -53,6 +53,7 @@ namespace decoder {
         
         private MenuItem[] InitializeMenu() {
             MenuItem[] menu = new MenuItem[] {
+                new MenuItem("New decoder", menuNewDecoder),
                 new MenuItem("About", menuAboutClick),
                 new MenuItem("Exit", menuExitClick)
             };
@@ -75,12 +76,17 @@ namespace decoder {
         }
         
         private void menuAboutClick ( object sender, EventArgs e ) {
-            MessageBox.Show( "About This Application" );
+            MessageBox.Show( "Application to decode raw hexdecimal byte array by given patterns, based on C struct templates.\r\nDecoder byAdamS-0 2026" );
         }
         
         private void menuExitClick ( object sender, EventArgs e ) {
             Application.Exit();
         }
+        
+        private void menuNewDecoder( object sender, EventArgs e ) {
+            AddNewGui().Show();
+        }
+        
         
         private void IconDoubleClick ( object sender, EventArgs e ) {
             MessageBox.Show( "The icon was double clicked" );

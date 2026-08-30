@@ -23,8 +23,19 @@ namespace decoder
         private System.Windows.Forms.RichTextBox rtbRawData;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.StatusStrip statusStrip1;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-        private System.Windows.Forms.ToolStripButton tlStrpBtnRebuildPatterns;
+        private System.Windows.Forms.ToolStripStatusLabel tlStrpLbl;
+        private System.Windows.Forms.ToolStripDropDownButton tlStpMenuPatterns;
+        private System.Windows.Forms.ToolStripMenuItem tlStrpBtnPatternNew;
+        private System.Windows.Forms.ToolStripMenuItem tlStrpBtnPatternRebuild;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem tlStrpBtnPatternRemove;
+        private System.Windows.Forms.ContextMenuStrip ctxMnTreeDetailView;
+        private System.Windows.Forms.ToolStripMenuItem expandAllToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem collapseAllToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem rebuildPatternToolStripMenuItem;
+        private System.Windows.Forms.ToolStripDropDownButton tlStrpMenuData;
+        private System.Windows.Forms.ToolStripMenuItem littleEndianToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem tlStrpDataHighlightFieldsBytes;
         
         /// <summary>
         /// Disposes resources used by the form.
@@ -47,6 +58,7 @@ namespace decoder
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem1 = new VisBox.TreeDetailsViewColumnItem();
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem2 = new VisBox.TreeDetailsViewColumnItem();
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem3 = new VisBox.TreeDetailsViewColumnItem();
@@ -54,6 +66,10 @@ namespace decoder
             VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem5 = new VisBox.TreeDetailsViewColumnItem();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DecoderGui));
             this.structInfoView1 = new VisBox.TreeDetailsView();
+            this.ctxMnTreeDetailView = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.expandAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.collapseAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.rebuildPatternToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pMain = new System.Windows.Forms.Panel();
             this.splitter2 = new System.Windows.Forms.Splitter();
             this.grpBxRawData = new System.Windows.Forms.GroupBox();
@@ -61,9 +77,17 @@ namespace decoder
             this.splitter1 = new System.Windows.Forms.Splitter();
             this.grpBxPatterns = new System.Windows.Forms.GroupBox();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.tlStrpBtnRebuildPatterns = new System.Windows.Forms.ToolStripButton();
+            this.tlStpMenuPatterns = new System.Windows.Forms.ToolStripDropDownButton();
+            this.tlStrpBtnPatternNew = new System.Windows.Forms.ToolStripMenuItem();
+            this.tlStrpBtnPatternRebuild = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.tlStrpBtnPatternRemove = new System.Windows.Forms.ToolStripMenuItem();
+            this.tlStrpMenuData = new System.Windows.Forms.ToolStripDropDownButton();
+            this.littleEndianToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tlStrpDataHighlightFieldsBytes = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tlStrpLbl = new System.Windows.Forms.ToolStripStatusLabel();
+            this.ctxMnTreeDetailView.SuspendLayout();
             this.pMain.SuspendLayout();
             this.grpBxRawData.SuspendLayout();
             this.toolStrip1.SuspendLayout();
@@ -97,6 +121,7 @@ namespace decoder
             this.structInfoView1.Columns.Add(treeDetailsViewColumnItem3);
             this.structInfoView1.Columns.Add(treeDetailsViewColumnItem4);
             this.structInfoView1.Columns.Add(treeDetailsViewColumnItem5);
+            this.structInfoView1.ContextMenuStrip = this.ctxMnTreeDetailView;
             this.structInfoView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.structInfoView1.FlatStyle = VisBox.VisElement.VisFlatStyle.Collapsed;
             this.structInfoView1.Location = new System.Drawing.Point(138, 106);
@@ -105,6 +130,38 @@ namespace decoder
             this.structInfoView1.TabIndex = 0;
             this.structInfoView1.Text = "structInfoView1";
             this.structInfoView1.TreeLine = null;
+            this.structInfoView1.Click += new System.EventHandler(this.StructInfoView1Click);
+            this.structInfoView1.Paint += new System.Windows.Forms.PaintEventHandler(this.StructInfoView1Paint);
+            // 
+            // ctxMnTreeDetailView
+            // 
+            this.ctxMnTreeDetailView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.expandAllToolStripMenuItem,
+            this.collapseAllToolStripMenuItem,
+            this.rebuildPatternToolStripMenuItem});
+            this.ctxMnTreeDetailView.Name = "ctxMnTreeDetailView";
+            this.ctxMnTreeDetailView.Size = new System.Drawing.Size(159, 70);
+            // 
+            // expandAllToolStripMenuItem
+            // 
+            this.expandAllToolStripMenuItem.Name = "expandAllToolStripMenuItem";
+            this.expandAllToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.expandAllToolStripMenuItem.Text = "Expand all";
+            this.expandAllToolStripMenuItem.Click += new System.EventHandler(this.ExpandAllToolStripMenuItemClick);
+            // 
+            // collapseAllToolStripMenuItem
+            // 
+            this.collapseAllToolStripMenuItem.Name = "collapseAllToolStripMenuItem";
+            this.collapseAllToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.collapseAllToolStripMenuItem.Text = "Collapse all";
+            this.collapseAllToolStripMenuItem.Click += new System.EventHandler(this.CollapseAllToolStripMenuItemClick);
+            // 
+            // rebuildPatternToolStripMenuItem
+            // 
+            this.rebuildPatternToolStripMenuItem.Name = "rebuildPatternToolStripMenuItem";
+            this.rebuildPatternToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.rebuildPatternToolStripMenuItem.Text = "Rebuild pattern";
+            this.rebuildPatternToolStripMenuItem.Click += new System.EventHandler(this.TlStrpBtnRebuildPatternsClick);
             // 
             // pMain
             // 
@@ -171,39 +228,96 @@ namespace decoder
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tlStrpBtnRebuildPatterns});
+            this.tlStpMenuPatterns,
+            this.tlStrpMenuData});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(544, 25);
             this.toolStrip1.TabIndex = 2;
             this.toolStrip1.Text = "toolStrip1";
             // 
-            // tlStrpBtnRebuildPatterns
+            // tlStpMenuPatterns
             // 
-            this.tlStrpBtnRebuildPatterns.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tlStrpBtnRebuildPatterns.Image = ((System.Drawing.Image)(resources.GetObject("tlStrpBtnRebuildPatterns.Image")));
-            this.tlStrpBtnRebuildPatterns.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tlStrpBtnRebuildPatterns.Name = "tlStrpBtnRebuildPatterns";
-            this.tlStrpBtnRebuildPatterns.Size = new System.Drawing.Size(136, 22);
-            this.tlStrpBtnRebuildPatterns.Text = "Rebuild current pattern";
-            this.tlStrpBtnRebuildPatterns.Click += new System.EventHandler(this.TlStrpBtnRebuildPatternsClick);
+            this.tlStpMenuPatterns.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tlStrpBtnPatternNew,
+            this.tlStrpBtnPatternRebuild,
+            this.toolStripSeparator1,
+            this.tlStrpBtnPatternRemove});
+            this.tlStpMenuPatterns.Name = "tlStpMenuPatterns";
+            this.tlStpMenuPatterns.Size = new System.Drawing.Size(59, 22);
+            this.tlStpMenuPatterns.Text = "Pattern";
+            // 
+            // tlStrpBtnPatternNew
+            // 
+            this.tlStrpBtnPatternNew.Name = "tlStrpBtnPatternNew";
+            this.tlStrpBtnPatternNew.Size = new System.Drawing.Size(199, 22);
+            this.tlStrpBtnPatternNew.Text = "New pattern";
+            this.tlStrpBtnPatternNew.Click += new System.EventHandler(this.NewPatternToolStripMenuItemClick);
+            // 
+            // tlStrpBtnPatternRebuild
+            // 
+            this.tlStrpBtnPatternRebuild.Name = "tlStrpBtnPatternRebuild";
+            this.tlStrpBtnPatternRebuild.Size = new System.Drawing.Size(199, 22);
+            this.tlStrpBtnPatternRebuild.Text = "Rebuild current pattern";
+            this.tlStrpBtnPatternRebuild.Click += new System.EventHandler(this.TlStrpBtnRebuildPatternsClick);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(196, 6);
+            // 
+            // tlStrpBtnPatternRemove
+            // 
+            this.tlStrpBtnPatternRemove.Name = "tlStrpBtnPatternRemove";
+            this.tlStrpBtnPatternRemove.Size = new System.Drawing.Size(199, 22);
+            this.tlStrpBtnPatternRemove.Text = "Remove this pattern";
+            this.tlStrpBtnPatternRemove.Click += new System.EventHandler(this.TlStrpBtnRemovePatternClick);
+            // 
+            // tlStrpMenuData
+            // 
+            this.tlStrpMenuData.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tlStrpMenuData.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.littleEndianToolStripMenuItem,
+            this.tlStrpDataHighlightFieldsBytes});
+            this.tlStrpMenuData.Image = ((System.Drawing.Image)(resources.GetObject("tlStrpMenuData.Image")));
+            this.tlStrpMenuData.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tlStrpMenuData.Name = "tlStrpMenuData";
+            this.tlStrpMenuData.Size = new System.Drawing.Size(46, 22);
+            this.tlStrpMenuData.Text = "Data";
+            // 
+            // littleEndianToolStripMenuItem
+            // 
+            this.littleEndianToolStripMenuItem.Checked = true;
+            this.littleEndianToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.littleEndianToolStripMenuItem.Name = "littleEndianToolStripMenuItem";
+            this.littleEndianToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.littleEndianToolStripMenuItem.Text = "LittleEndian";
+            // 
+            // tlStrpDataHighlightFieldsBytes
+            // 
+            this.tlStrpDataHighlightFieldsBytes.Checked = true;
+            this.tlStrpDataHighlightFieldsBytes.CheckOnClick = true;
+            this.tlStrpDataHighlightFieldsBytes.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.tlStrpDataHighlightFieldsBytes.Name = "tlStrpDataHighlightFieldsBytes";
+            this.tlStrpDataHighlightFieldsBytes.Size = new System.Drawing.Size(190, 22);
+            this.tlStrpDataHighlightFieldsBytes.Text = "Highlight field\'s bytes";
             // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel1});
+            this.tlStrpLbl});
             this.statusStrip1.Location = new System.Drawing.Point(0, 379);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(544, 22);
             this.statusStrip1.TabIndex = 3;
             this.statusStrip1.Text = "statusStrip1";
             // 
-            // toolStripStatusLabel1
+            // tlStrpLbl
             // 
-            this.toolStripStatusLabel1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(125, 17);
-            this.toolStripStatusLabel1.Text = "toolStripStatusLabel1";
+            this.tlStrpLbl.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tlStrpLbl.Name = "tlStrpLbl";
+            this.tlStrpLbl.Size = new System.Drawing.Size(76, 17);
+            this.tlStrpLbl.Text = "Status: done";
             // 
             // DecoderGui
             // 
@@ -216,6 +330,7 @@ namespace decoder
             this.Icon = global::decoder.Resource1.icon1;
             this.Name = "DecoderGui";
             this.Text = "DecoderGui";
+            this.ctxMnTreeDetailView.ResumeLayout(false);
             this.pMain.ResumeLayout(false);
             this.grpBxRawData.ResumeLayout(false);
             this.toolStrip1.ResumeLayout(false);

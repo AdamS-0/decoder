@@ -126,9 +126,7 @@ namespace decoder {
                                 unchecked {
                                     elRaw = elRaw + (UInt64)(1UL << bitIdInEl);
                                 }
-                            } catch (Exception ex) {
-                                int dummyInt22 = 0;
-                            }
+                            } catch (Exception ex) { }
                         }
                     }
                     decField.Raw[elId] = elRaw;   

@@ -9,6 +9,8 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using VisBox;
 
@@ -30,24 +32,20 @@ namespace decoder {
         private void ItemMouseEnter( object sender, EventArgs e ) {
             TreeDetailsViewItem node = sender as TreeDetailsViewItem;
             try {
-                Text = node.Text + ", BitOffset: " + node.Tag2 + ", bitSize: " + node.Tag3;
-            } catch {
-                Text = node.Text;
-            }
-            
-            try {
+                tlStrpLbl.Text = "Item: " + node.Text + " @ " + node.Tag3 + " bits, offset: " + node.Tag2 + " bits";
+                
+                if ( !tlStrpDataHighlightFieldsBytes.Checked ) { return; }
+                rtbRawData.SuspendDrawing();
+                
                 int bitOffsetStart = (int)node.Tag2;
                 int bitOffsetStop = bitOffsetStart + (int)node.Tag3 - 1;
                 
                 int byteId = 0;
                 int bitId = 0;
-                char lastCorrectChar = ' ';
                 bool isMsbNibble = true;
                 
                 bitOffsetStart  = ( ( bitOffsetStart ) / 4 ) * 4;
                 bitOffsetStop   = ( ( bitOffsetStop ) / 4 ) * 4;
-                
-                Text = node.Text + ", BitOffset: " + node.Tag2 + ", bitSize: " + node.Tag3 + "/" + "Start: " + bitOffsetStart + ", Stop: " + bitOffsetStop;
                 
                 int idxCorrectCharLast = -1;
                 
@@ -95,6 +93,7 @@ namespace decoder {
                 rtbRawData.DeselectAll();
                 
             } catch (Exception ex) {}
+            rtbRawData.ResumeDrawing();
         }
 
         private void BindDecoderSub(Decoder dec, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
@@ -128,7 +127,6 @@ namespace decoder {
                         nodeI.AddSubitem( decField.GetElementTypeAsString() );
                         nodeI.AddSubitem( decField.ElementSizeBits.ToString() );
                         nodeI.Tag3 = (int)decField.ElementSizeBits;
-                    
                     }
                     
                     nodeI.Tag2 = bitOffset;
@@ -164,11 +162,12 @@ namespace decoder {
         
         public void BindDecoder(Decoder dec) {
             _decCurrent = dec;
+            structInfoView1.SuspendDrawing();
             structInfoView1.Nodes.Clear();
             int bitOffset = 0;
             BindDecoderSub( dec, ref bitOffset );
+            structInfoView1.ResumeDrawing();
             structInfoView1.Refresh();
-            
         }
         
         
@@ -180,6 +179,9 @@ namespace decoder {
             rtbRawData.Text = strRawData;
         }
         
+        
+        
+        private static readonly Regex _rgxOneNibbles = new Regex(@" ([0-9a-fA-F]) ", RegexOptions.Compiled);
         public void TryParseRawData() {
             try {
                 if ( _decCurrent == null ) { 
@@ -190,10 +192,11 @@ namespace decoder {
                 string strData = rtbRawData.Text;
                 
                 strData = strData.Replace(" 0x", " ");
-                strData = strData.Replace(" ", "");
                 strData = strData.Replace("\n", "");
                 strData = strData.Replace("\r", "");
                 strData = strData.Replace("\t", "");
+                strData = _rgxOneNibbles.Replace( strData, "0$1" );
+                strData = strData.Replace(" ", "");
                 
                 Byte[] dataBytes = StringToByteArray(strData);
                 _decCurrent.TryDecodeData( dataBytes );
@@ -217,7 +220,6 @@ namespace decoder {
         VisBox.PushButtonManager _pushBtnMngr_decoder = new PushButtonManager();
         private static int _pushBtnTotCntr = 0;
         public void AddDecoder(ref Decoder dec) {
-            
             VisBox.PushButton pushBtn = new PushButton();
             pushBtn.Text = dec.Name.Length == 0 ? ( "pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;
             pushBtn.Tag = dec;
@@ -246,10 +248,105 @@ namespace decoder {
         
         
         void TlStrpBtnRebuildPatternsClick ( object sender, EventArgs e ) {
-            _decCurrent.RebuildPattern();
-            BindDecoder( _decCurrent );
+            try {
+                _decCurrent.RebuildPattern();
+                BindDecoder( _decCurrent );
+            } catch {}
         }
         
         
+        void TlStrpBtnRemovePatternClick ( object sender, EventArgs e ) {
+            if ( _decCurrent == null ) { return; }
+            for ( int idx = 0; idx < grpBxPatterns.Controls.Count; idx++ ) {
+                PushButton pBtn = grpBxPatterns.Controls[idx] as PushButton;
+                if ( pBtn.Tag.Equals( _decCurrent ) ) {
+                    pBtn.Dispose();
+                    break;
+                }
+            }
+            _decoders.Remove( _decCurrent );
+            _decCurrent = _decoders[0];
+            BindDecoder( _decCurrent );
+        }
+        
+        void NewPatternToolStripMenuItemClick ( object sender, EventArgs e ) {
+            formNewPattern fNewPattern = new formNewPattern();
+            fNewPattern.NewPattern += newPatternFromForm;
+            fNewPattern.Show();
+        }
+        
+        private void newPatternFromForm(string newPattern, string patternName) {
+            
+            Decoder dec = new Decoder( newPattern );
+            if ( dec != null ) {
+                AddDecoder( ref dec );
+                TryParseRawData();
+            }
+        }
+        
+        void StructInfoView1Click ( object sender, EventArgs e ) {
+            
+        }
+        
+        void ExpandAllToolStripMenuItemClick ( object sender, EventArgs e ) {
+            ChangeCollapseNodes( false );
+        }
+        
+        void CollapseAllToolStripMenuItemClick ( object sender, EventArgs e ) {
+            ChangeCollapseNodes( true );
+        }
+        
+        private void ChangeCollapseNodes(bool collapse) {
+            if ( _decCurrent == null ) { return; }
+            
+            foreach ( TreeDetailsViewItem node in structInfoView1.Nodes ) {
+                changeCollapseSubNodes( node, collapse );
+            }
+            structInfoView1.NumberOfVisibleNodesChanged();
+        }
+        
+        private void changeCollapseSubNodes( TreeDetailsViewItem node, bool collapse ) {
+            node.Collapsed = collapse;
+            foreach ( TreeDetailsViewItem subNode in node.Nodes ) {
+                changeCollapseSubNodes( subNode, collapse );
+            }
+        }
+        
+        private int _cntrPaints = 0;
+        void StructInfoView1Paint ( object sender, PaintEventArgs e ) {
+            _cntrPaints++;
+            Text = "Pains: " + _cntrPaints;
+        }
+
+        
+        
+    }
+    
+    
+    
+    public static class ControlExtensions {
+        [DllImport( "user32.dll")]
+        private static extern IntPtr SendMessage ( IntPtr hWnd, int msg, IntPtr wp, IntPtr lp );
+
+        private const int WM_SETREDRAW = 0x000B;
+
+        /// <summary>
+        /// Zamraża odświeżanie graficzne kontrolki.
+        /// </summary>
+        public static void SuspendDrawing ( this Control control ) {
+            if ( control != null && !control.IsDisposed && control.IsHandleCreated ) {
+                SendMessage( control.Handle, WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero );
+            }
+        }
+
+        /// <summary>
+        /// Odmraża odświeżanie graficzne kontrolki i wymusza jej przerysowanie.
+        /// </summary>
+        public static void ResumeDrawing ( this Control control ) {
+            if ( control != null && !control.IsDisposed && control.IsHandleCreated ) {
+                SendMessage( control.Handle, WM_SETREDRAW, (IntPtr)1, IntPtr.Zero );
+                control.Refresh(); // Odświeża natychmiast całą kontrolkę wraz z dziećmi
+            }
+        }
     }
 }

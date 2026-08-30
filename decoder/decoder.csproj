@@ -89,6 +89,10 @@
     <Compile Include="DecoderGui.Designer.cs">
       <DependentUpon>DecoderGui.cs</DependentUpon>
     </Compile>
+    <Compile Include="formNewPattern.cs" />
+    <Compile Include="formNewPattern.Designer.cs">
+      <DependentUpon>formNewPattern.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainListener.cs" />
     <Compile Include="MainListener.Designer.cs">
       <DependentUpon>MainListener.cs</DependentUpon>
@@ -108,6 +112,9 @@
   <ItemGroup>
     <EmbeddedResource Include="DecoderGui.resx">
       <DependentUpon>DecoderGui.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="formNewPattern.resx">
+      <DependentUpon>formNewPattern.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainListener.resx">
       <DependentUpon>MainListener.cs</DependentUpon>
