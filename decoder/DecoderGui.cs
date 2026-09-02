@@ -315,7 +315,6 @@ namespace decoder {
         private int _cntrPaints = 0;
         void StructInfoView1Paint ( object sender, PaintEventArgs e ) {
             _cntrPaints++;
-            Text = "Pains: " + _cntrPaints;
         }
 
         

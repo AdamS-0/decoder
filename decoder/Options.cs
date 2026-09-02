@@ -11,7 +11,7 @@ using System.Reflection;
 using CommandLineParser;
 
 namespace decoder{
-
+    
     [AppInfo(
         AppName = AppInfo.Name,
         AppVersion = AppInfo.Version,
@@ -28,6 +28,6 @@ namespace decoder{
                    ArgumentName = "", ArgumentRequired = false)]
         public string noGui { get; set; }
         
-
+        
     }
 }

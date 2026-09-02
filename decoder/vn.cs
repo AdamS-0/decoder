@@ -1,12 +1,12 @@
 using System; 
 namespace decoder { 
     public class vn { 
-        public const string BUILD_NUM  = "413"; 
+        public const string BUILD_NUM  = "431"; 
         public const string BUILD_YEAR = "26"; 
-        public const string BUILD_MON  = "08"; 
-        public const string BUILD_DAY  = "30"; 
-        public const string BUILD_HOUR = "18"; 
-        public const string BUILD_MIN  = "33"; 
+        public const string BUILD_MON  = "09"; 
+        public const string BUILD_DAY  = "02"; 
+        public const string BUILD_HOUR = "20"; 
+        public const string BUILD_MIN  = "15"; 
         public vn() {} 
     } 
 } 

@@ -107,6 +107,15 @@
     <Compile Include="vn.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\CommandLineParser.dll">
+      <Link>CommandLineParser.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\CsBitmask.dll">
+      <Link>CsBitmask.dll</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\VisBox.dll">
+      <Link>VisBox.dll</Link>
+    </EmbeddedResource>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
