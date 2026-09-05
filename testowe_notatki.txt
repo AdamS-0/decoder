@@ -61,6 +61,13 @@ typedef struct {
 
 F1 FA 00 83 00 FA 00 6C CA 88 00 28 6B EE 00 00 7C 1D AF 93 19 83 00 00 08 C5 A1 D8 CC F9 00 00 C0 BF D8 0F 49 40 17 B7 D1 B8 7B 14 AE 47 E1 FA 23 C0 44 17 41 54 FB 21 09 40 95 D6 26 E8 0B 2E 11 BE 5A 48 65 6C 6C 6F 00 00 00 00 00
 
+typedef struct {
+    uint16_t normalU16;
+    union {
+        uint32_t rawU32;
+        char     str[4];
+    };
+}myStructWithUnions_t;
 
 
 
