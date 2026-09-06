@@ -20,9 +20,11 @@ namespace decoder {
     /// </summary>
     public partial class DecoderGui : Form {
         
-        public List<Decoder> _decoders = new List<Decoder>();
+        dParser _parser = new dParser();
         
-        public Decoder _decCurrent = null;
+        public List<dObject> _decoders = new List<dObject>();
+        
+        public dObject _decCurrent = null;
         
         public DecoderGui() {
             InitializeComponent();
@@ -96,71 +98,72 @@ namespace decoder {
             rtbRawData.ResumeDrawing();
         }
 
-        private void BindDecoderSub(Decoder dec, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
-            foreach ( DecoderField decField in dec._fields ) {
-                TreeDetailsViewItem node = parentNode == null ? structInfoView1.AddNode( decField.Name ) : parentNode.AddSubNode( decField.Name );
-                node.AddSubitem( decField.GetTypeAsString() );
-                node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
-                node.Tag2 = bitOffset;
-                node.Tag3 = decField.GetTotalSizeInBits();
+        private void BindDecoderSub(dObject decField, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
+            /* Print all fields in this object */
+            TreeDetailsViewItem node = parentNode == null ? structInfoView1.AddNode( decField.Name ) : parentNode.AddSubNode( decField.Name );
+            node.AddSubitem( decField.GetTypeAsString() );
+            node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
+            node.Tag2 = bitOffset;
+            node.Tag3 = decField.GetTotalSizeInBits();
+            
+            if ( ( decField.NoElements > 1 ) && ( decField.Type == dObject.DecType.Char ) ) {
+                TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
+                subItemValCharArr.ShowRelatedObject = true;
+                subItemValCharArr.GetRelatedObject = delegate() {
+                    try {
+                        string strCharArr = "\"";
+                        for ( int idx = 0; idx < decField.NoElements; idx++ ) {
+                            strCharArr += (char)decField.Raw[idx];
+                        }
+                        return strCharArr + "\"";
+                    } catch {}
+                    return "---";
+                };
+            }
+            
+            int numberOfNibbles = ( ( decField.NoBitsUsed - 1) / 4 ) + 1;
+            for( int elId = 0; elId < decField.NoElements; elId++ ) {
+                TreeDetailsViewItem nodeI = node;
+                if ( decField.NoElements > 1 ) {                        
+                    nodeI = node.AddSubNode( decField.Name + "[" + elId + "]" );
+                    nodeI.AddSubitem( decField.GetElementTypeAsString() );
+                    nodeI.AddSubitem( decField.ElementSizeBits.ToString() );
+                    nodeI.Tag3 = (int)decField.ElementSizeBits;
+                }
                 
-                if ( ( decField.NoElements > 1 ) && ( decField.Type == DecoderField.DecType.Char ) ) {
-                    TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
-                    subItemValCharArr.ShowRelatedObject = true;
-                    subItemValCharArr.GetRelatedObject = delegate() {
+                nodeI.Tag2 = bitOffset;
+                
+                if ( decField.Type == dObject.DecType.Complex ) {
+                    if ( decField.Body != null ) {
+                        /* FIXME fix array of body */
+                        for ( int idx = 0; idx < decField.Body.Count; idx++ ) {
+                            BindDecoderSub( decField.Body[idx], ref bitOffset, nodeI );
+                        }
+                    }
+                } else {
+                    TreeDetailsViewSubItem subItemVal = nodeI.AddSubitem( "[...]" );
+                    subItemVal.ShowRelatedObject = true;
+                    subItemVal.Tag = elId;
+                    subItemVal.GetRelatedObject = () => ((object[])decField.Value)[ (int)subItemVal.Tag ];
+                    
+                    TreeDetailsViewSubItem subItemRaw = nodeI.AddSubitem( "[...]" );
+                    subItemRaw.ShowRelatedObject = true;
+                    subItemRaw.Tag = elId;
+                    subItemRaw.GetRelatedObject = delegate() {
                         try {
-                            string strCharArr = "\"";
-                            for ( int idx = 0; idx < decField.NoElements; idx++ ) {
-                                strCharArr += (char)decField.Raw[idx];
-                            }
-                            return strCharArr + "\"";
+                            object obj = ((ulong[])decField.Raw)[ (int)subItemRaw.Tag ];
+                            return "0x" + ((UInt64)obj).ToString("X" + numberOfNibbles);
                         } catch {}
                         return "---";
                     };
-                }
-                
-                int numberOfNibbles = ( ( decField.NoBitsUsed - 1) / 4 ) + 1;
-                for( int elId = 0; elId < decField.NoElements; elId++ ) {
-                    TreeDetailsViewItem nodeI = node;
-                    if ( decField.NoElements > 1 ) {                        
-                        nodeI = node.AddSubNode( decField.Name + "[" + elId + "]" );
-                        nodeI.AddSubitem( decField.GetElementTypeAsString() );
-                        nodeI.AddSubitem( decField.ElementSizeBits.ToString() );
-                        nodeI.Tag3 = (int)decField.ElementSizeBits;
-                    }
                     
-                    nodeI.Tag2 = bitOffset;
-                    
-                    if ( decField.Type == DecoderField.DecType.Complex ) {
-                        if ( decField.ComplexDecoder != null ) {
-                            BindDecoderSub( decField.ComplexDecoder[elId], ref bitOffset, nodeI );
-                        }
-                    } else {
-                        TreeDetailsViewSubItem subItemVal = nodeI.AddSubitem( "[...]" );
-                        subItemVal.ShowRelatedObject = true;
-                        subItemVal.Tag = elId;
-                        subItemVal.GetRelatedObject = () => ((object[])decField.Value)[ (int)subItemVal.Tag ];
-                        
-                        TreeDetailsViewSubItem subItemRaw = nodeI.AddSubitem( "[...]" );
-                        subItemRaw.ShowRelatedObject = true;
-                        subItemRaw.Tag = elId;
-                        subItemRaw.GetRelatedObject = delegate() {
-                            try {
-                                object obj = ((ulong[])decField.Raw)[ (int)subItemRaw.Tag ];
-                                return "0x" + ((UInt64)obj).ToString("X" + numberOfNibbles);
-                            } catch {}
-                            return "---";
-                        };
-                        
-                        bitOffset += decField.NoBitsUsed;
-                    }
+                    bitOffset += decField.NoBitsUsed;
                 }
-
             }
             
         }
         
-        public void BindDecoder(Decoder dec) {
+        public void BindDecoder(dObject dec) {
             _decCurrent = dec;
             structInfoView1.SuspendDrawing();
             structInfoView1.Nodes.Clear();
@@ -172,7 +175,7 @@ namespace decoder {
         
         
         void RtbRawDataTextChanged ( object sender, EventArgs e ) {
-            TryParseRawData();
+            TryDecodeRawData();
         }
         
         public void SetRawDataAndTryParse(string strRawData) {
@@ -182,7 +185,7 @@ namespace decoder {
         
         
         private static readonly Regex _rgxOneNibbles = new Regex(@" ([0-9a-fA-F]) ", RegexOptions.Compiled);
-        public void TryParseRawData() {
+        public void TryDecodeRawData() {
             try {
                 if ( _decCurrent == null ) { 
                     /* Decoder not defined */
@@ -219,7 +222,7 @@ namespace decoder {
         
         VisBox.PushButtonManager _pushBtnMngr_decoder = new PushButtonManager();
         private static int _pushBtnTotCntr = 0;
-        public void AddDecoder(ref Decoder dec) {
+        public void AddDecoder(ref dObject dec) {
             VisBox.PushButton pushBtn = new PushButton();
             pushBtn.Text = dec.Name.Length == 0 ? ( "pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;
             pushBtn.Tag = dec;
@@ -229,8 +232,8 @@ namespace decoder {
             pushBtn.Click += delegate (object sender, EventArgs e) {
                 if ( pushBtn.Tag != null ) {
                     try {
-                        this.BindDecoder( (Decoder)(pushBtn.Tag) );
-                        TryParseRawData();
+                        this.BindDecoder( (dObject)(pushBtn.Tag) );
+                        TryDecodeRawData();
                     } catch {}
                 }
             };
@@ -276,11 +279,14 @@ namespace decoder {
         }
         
         private void newPatternFromForm(string newPattern, string patternName) {
-            
-            Decoder dec = new Decoder( newPattern );
+            TryParseNewPattern( newPattern, patternName );
+        }
+        
+        public void TryParseNewPattern(string newPattern, string patternName = "") {
+            dObject dec = _parser.ParseSource( newPattern );
             if ( dec != null ) {
                 AddDecoder( ref dec );
-                TryParseRawData();
+                TryDecodeRawData();
             }
         }
         

@@ -93,7 +93,7 @@ namespace decoder {
         }
         
         
-        public void AddDecoder(ref Decoder decNew) {
+        public void AddDecoder(ref dObject decNew) {
             DecoderGui decGui = GetCurrGui();
             decGui.AddDecoder( ref decNew );
         }
@@ -131,13 +131,8 @@ namespace decoder {
             string strPattern = GetSelectedText();
             _leftMenu.Close();
             
-            Decoder dec = new Decoder( strPattern );
-            if ( dec != null ) {
-                DecoderGui gui = GetCurrGui();
-                gui.AddDecoder( ref dec );
-                gui.Show();
-                gui.TryParseRawData();
-            }
+            DecoderGui gui = GetCurrGui();
+            gui.TryParseNewPattern( strPattern );
         }
         
         private void leftMenu_getData ( object sender, EventArgs e ) {
@@ -153,30 +148,6 @@ namespace decoder {
             SendKeys.Send("^c");
             return Clipboard.GetText();
         }
-
-        
-//        /// <summary>Program entry point.</summary>
-//        /// <param name="args">Command Line Arguments</param>
-//        [STAThread]
-//        public static void Main(string[] args)
-//        {
-//            Application.EnableVisualStyles();
-//            Application.SetCompatibleTextRenderingDefault(false);
-//            
-//            bool isFirstInstance;
-//            // Please use a unique name for the mutex to prevent conflicts with other programs
-//            using (Mutex mtx = new Mutex(true, "NotifyAppTests", out isFirstInstance)) {
-//                if (isFirstInstance) {
-//                    MainListener notificationIcon = new MainListener();
-//                    notificationIcon._notifyIcon.Visible = true;
-//                    Application.Run();
-//                    notificationIcon._notifyIcon.Dispose();
-//                } else {
-//                    // The application is already running
-//                    // TODO: Display message box or change focus to existing application instance
-//                }
-//            } // releases the Mutex
-//        }
     }
 }
 

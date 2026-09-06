@@ -77,22 +77,27 @@
   <ItemGroup>
     <Compile Include="AdvancedKey.cs" />
     <Compile Include="AppInfo.cs" />
-    <Compile Include="Decoder.cs" />
-    <Compile Include="Decoder.static.cs">
-      <DependentUpon>Decoder.cs</DependentUpon>
+    <Compile Include="dObject.cs" />
+    <Compile Include="dObject.decode.cs">
+      <DependentUpon>dObject.cs</DependentUpon>
     </Compile>
-    <Compile Include="DecoderField.cs" />
-    <Compile Include="DecoderField.static.cs">
-      <DependentUpon>DecoderField.cs</DependentUpon>
+    <Compile Include="dObject.parser.cs">
+      <DependentUpon>dObject.cs</DependentUpon>
+    </Compile>
+    <Compile Include="dObject.static.cs">
+      <DependentUpon>dObject.cs</DependentUpon>
     </Compile>
     <Compile Include="DecoderGui.cs" />
     <Compile Include="DecoderGui.Designer.cs">
       <DependentUpon>DecoderGui.cs</DependentUpon>
     </Compile>
+    <Compile Include="dParser.cs" />
+    <Compile Include="dParsers\dParserC.cs" />
     <Compile Include="formNewPattern.cs" />
     <Compile Include="formNewPattern.Designer.cs">
       <DependentUpon>formNewPattern.cs</DependentUpon>
     </Compile>
+    <Compile Include="ListExtension.cs" />
     <Compile Include="MainListener.cs" />
     <Compile Include="MainListener.Designer.cs">
       <DependentUpon>MainListener.cs</DependentUpon>
@@ -132,6 +137,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="dParsers" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
