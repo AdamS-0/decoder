@@ -260,13 +260,11 @@ namespace decoder {
         
         void TlStrpBtnRemovePatternClick ( object sender, EventArgs e ) {
             if ( _decCurrent == null ) { return; }
-            for ( int idx = 0; idx < grpBxPatterns.Controls.Count; idx++ ) {
-                PushButton pBtn = grpBxPatterns.Controls[idx] as PushButton;
-                if ( pBtn.Tag.Equals( _decCurrent ) ) {
-                    pBtn.Dispose();
-                    break;
-                }
-            }
+            
+            TreeNode node = trVwPatterns.SelectedNode;
+            if ( node == null ) { return; }
+            node.Remove();
+
             _decoders.Remove( _decCurrent );
             _decCurrent = _decoders[0];
             BindDecoder( _decCurrent );

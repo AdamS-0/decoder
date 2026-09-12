@@ -101,9 +101,19 @@ namespace decoder {
         private static DecoderGui AddNewGui() {
             DecoderGui newDecGui = new DecoderGui();
             newDecGui.Activated += delegate (object sender, EventArgs e) { _curDecGui = (DecoderGui)sender; };
+            newDecGui.FormClosed += DecGuiClosed;
             _decGui.Add( newDecGui );
             _curDecGui = newDecGui;
             return newDecGui;
+        }
+        
+        private static void DecGuiClosed(object sender, FormClosedEventArgs e) {
+            DecoderGui decGui = sender as DecoderGui;
+            try {
+                _decGui.Remove( decGui );
+                decGui.Dispose();
+                _curDecGui = null;
+            } catch {}
         }
         
         public static DecoderGui GetCurrGui() {
@@ -132,7 +142,9 @@ namespace decoder {
             _leftMenu.Close();
             
             DecoderGui gui = GetCurrGui();
+            gui.Show();
             gui.TryParseNewPattern( strPattern );
+            gui.BringToFront();
         }
         
         private void leftMenu_getData ( object sender, EventArgs e ) {
@@ -141,6 +153,7 @@ namespace decoder {
             _leftMenu.Close();
             DecoderGui gui = GetCurrGui();
             gui.SetRawDataAndTryParse( strData );
+            gui.BringToFront();
         }
         
         private string GetSelectedText() {
