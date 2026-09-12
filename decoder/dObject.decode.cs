@@ -156,7 +156,7 @@ namespace decoder {
         public bool TryDecodeDataInternal(ref Byte[] arrIn, ref int idByte, ref int idBit) {
             bool status = false;
             ClearRaws();
-            if ( this.Type == dObject.DecType.Complex ) {
+            if ( this.Type == dObject.DecType.Complex && !this.IsEnum ) {
                 TryDecodeInternal_asComplex( ref arrIn, ref idByte, ref idBit );
             } else {
                 TryDecodeInternal_asSimpleType( ref arrIn, ref idByte, ref idBit );

@@ -136,7 +136,7 @@ namespace decoder {
                 
                 nodeI.Tag2 = bitOffset;
                 
-                if ( decField.Type == dObject.DecType.Complex ) {
+                if ( ( decField.Type == dObject.DecType.Complex ) && !( decField.IsEnum ) ) {
                     if ( decField.Body != null ) {
                         /* FIXME fix array of body */
                         if ( decField.IsUnion ) {

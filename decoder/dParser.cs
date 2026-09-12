@@ -59,7 +59,7 @@ namespace decoder {
                     idxFirstSemicolon = strSrc.IndexOf(';');
                     idxFirstSOS = strSrc.IndexOf('{');
                 } catch {}
-                if ( ( idxFirstSemicolon == -1 ) && ( idxFirstSOS == -1 ) ) { break; }
+//                if ( ( idxFirstSemicolon == -1 ) && ( idxFirstSOS == -1 ) ) { break; }
                 
                 dObject atox = new dObject();
                 
@@ -101,11 +101,19 @@ namespace decoder {
                     } else {
                         idxEndAtox = idxFirstSemicolon + 1;
                     }
+                } else {
+                    /* Not foudn any '{' NOR ';', so it may be an enum body */
+                    int idxComa = strSrc.IndexOf(',') + 1;
+                    if ( ( idxComa <= 0 ) || ( idxComa >= strSrc.Length ) ) {
+                        idxEndAtox = strSrc.Length;
+                    } else {
+                        idxEndAtox = idxComa;
+                    }
                 }
                 
                 /* Parse parameters (Specifiers & Name) of this ATOX */
                 string strAtoxParams = "";
-                if ( ( idxEndAtox >= 0 ) && ( idxEndAtox < strSrc.Length ) ) {
+                if ( ( idxEndAtox >= 0 ) && ( idxEndAtox <= strSrc.Length ) ) {
                     strAtoxParams = strSrc.Substring( 0, idxEndAtox );
                     strAtoxParams = strAtoxParams.Trim(' ');
                 }

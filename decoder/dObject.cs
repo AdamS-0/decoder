@@ -50,6 +50,7 @@ namespace decoder {
         public string           dObjRaw = "";
         public string           Comment = "";
         public string           Name = "";
+        public string           TypeName = "";
         
         public object           Value;
         public UInt64[]         Raw;
@@ -82,9 +83,24 @@ namespace decoder {
         public ushort   ElementSizeBits {
             get {
                 if ( this.Type == DecType.Complex ) {
-                        return this.Body[0].ElementSizeBits;
+                    ushort compelxElSize = 0;
+                    if ( this.IsUnion ) {
+                        ushort elSizeMax = 0;
+                        for ( int idx = 0; idx < this.Body.Count; idx++ ) {
+                            compelxElSize = (ushort)(this.Body[idx].GetTotalSizeInBits());
+                            if ( elSizeMax < compelxElSize ) { elSizeMax = compelxElSize; }
+                        }
+                        compelxElSize = elSizeMax;
+                    } else if ( this.IsEnum ) {
+                        return (ushort)NoBitsUsed;
+                    } else {
+                        for ( int idx = 0; idx < this.Body.Count; idx++ ) {
+                            compelxElSize += (ushort)(this.Body[idx].GetTotalSizeInBits());
+                        }
+                    }
+                    return compelxElSize;
                 }
-                return _elementSizeBits;
+                return (ushort)NoBitsUsed;// _elementSizeBits;
             }
         }
         
@@ -136,7 +152,7 @@ namespace decoder {
         public dObject() { }
         
         public int GetTotalSizeInBits() {
-            return this.NoElements * this.NoBitsUsed;
+            return this.NoElements * this.ElementSizeBits;
         }
         
         public ushort GetStructSizeBits() {
@@ -186,7 +202,7 @@ namespace decoder {
                     strType += "void"; break;
                 default:
                     if ( this.Type == DecType.Complex ) {
-                        strType += this.Name; break;
+                        strType += this.TypeName; break;
                     }
                     
                     strType += "int";

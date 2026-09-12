@@ -26,6 +26,7 @@ namespace decoder {
             string  strNoElements   = "1";
             string  strComment      = "";
             string  strDObjRaw      = strAtoxParams;
+            this._elementSizeBits = 32;
             
             /* Get comments from sentence */
             int idxCommentStart = -1;
@@ -61,6 +62,7 @@ namespace decoder {
             strAtoxParams = strAtoxParams.Replace( "]", " ] " );
             strAtoxParams = _rgxSpaceCutter.Replace( strAtoxParams, " " );
             strAtoxParams = strAtoxParams.Replace( ";", "" );
+            strAtoxParams = strAtoxParams.Replace( ",", "" );
             
             string[] partsArr = strAtoxParams.Split(' ');
             if ( partsArr.Length == 0 ) { return; }
@@ -157,6 +159,7 @@ namespace decoder {
                     if ( parts[idx].Equals( dObj.Name ) ) {
                         /* This is a type that was defined previously! */
                         dObj.CloneToObject( this );
+                        this.TypeName = dObj.Name;
                         this.IsTypedef  = false;
                         parts.RemoveAt( idx );
                         idx--;
@@ -182,14 +185,66 @@ namespace decoder {
                             break;
                         }
                     }
-                    
+                }
+            }
+            
+            if ( this.IsPointer ) {
+                this._elementSizeBits = 32;
+                this.NoBitsUsed = 32;
+            }
+            
+            
+            if ( this.IsEnum && !this.IsTypedef ) {
+                int enumerator = 0;
+                for ( int idxBody = 0; idxBody < this.Body.Count; idxBody++ ) {
+                    if ( this.Body[idxBody].Value == null ) {
+                        this.Body[idxBody].Value = enumerator;
+                    } else {
+                        try {
+                            enumerator = Convert.ToInt32( this.Body[idxBody].Value );
+                        } catch {
+                            /* This is not a number, so check for existing reference (enum) */
+                            if ( this.Body[idxBody].Value == null ) { break; }
+                            if ( this.Body[idxBody].Value.GetType() != typeof(string) ) { break; }
+                            /* Make sure we parse only string */
+                            bool foundReference = false;
+                            string strLastEnumVal = this.Body[idxBody].Value.ToString();
+                            try {
+                                for ( int idxDObj = 0; ( idxDObj < ownTypes.Count ) && !foundReference; idxDObj++ ) {
+                                    if ( !ownTypes[idxDObj].IsEnum ) { continue; }
+                                    
+                                    for ( int idx = 0; idx < ownTypes[idxDObj].Body.Count; idx++ ) {
+                                        if ( ownTypes[idxDObj].Body[idx].Name.Equals( strLastEnumVal ) ) {
+                                            enumerator = Convert.ToInt32( ownTypes[idxDObj].Body[idx].Value );
+                                            foundReference = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch {}
+                        }
+                    }
+                    enumerator++;
                 }
             }
             
             this.Comment    = strComment;
             this.dObjRaw    = strDObjRaw;
+            // __ANON.STRUCT__
+            // __ANON.UNION__
+            // __ANON__
             
-            if ( parts.Count == 0 ) { this.Name = "---"; return; }
+            // ?STRUCT?
+            // ?UNION?
+            // ??
+            
+            if ( parts.Count == 0 ) {
+                this.Name = "?";
+                if ( this.IsUnion ) { this.Name += "UNION"; }
+                else if ( this.IsStruct ) { this.Name += "STRUCT"; }
+                this.Name += "?";
+                return;
+            }
             if ( noUsedBits == -1 ) { noUsedBits = this._elementSizeBits; }
             this.NoBitsUsed = noUsedBits;
             
