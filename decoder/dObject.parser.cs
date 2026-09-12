@@ -186,14 +186,15 @@ namespace decoder {
                 }
             }
             
-            if ( parts.Count == 0 ) { return; }
+            this.Comment    = strComment;
+            this.dObjRaw    = strDObjRaw;
+            
+            if ( parts.Count == 0 ) { this.Name = "---"; return; }
             if ( noUsedBits == -1 ) { noUsedBits = this._elementSizeBits; }
             this.NoBitsUsed = noUsedBits;
             
-            /* There should be at least one element that was not found - name */
+            /* There should be at least one element that was not recognised - name */
             this.Name       = parts[0];
-            this.Comment    = strComment;
-            this.dObjRaw    = strDObjRaw;
         }
         
         

@@ -99,6 +99,9 @@ namespace decoder {
         }
 
         private void BindDecoderSub(dObject decField, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
+            int bitOffsetUnion = bitOffset;
+            int bitOffsetUnionMax = bitOffset;
+            
             /* Print all fields in this object */
             TreeDetailsViewItem node = parentNode == null ? structInfoView1.AddNode( decField.Name ) : parentNode.AddSubNode( decField.Name );
             node.AddSubitem( decField.GetTypeAsString() );
@@ -136,8 +139,18 @@ namespace decoder {
                 if ( decField.Type == dObject.DecType.Complex ) {
                     if ( decField.Body != null ) {
                         /* FIXME fix array of body */
-                        for ( int idx = 0; idx < decField.Body.Count; idx++ ) {
-                            BindDecoderSub( decField.Body[idx], ref bitOffset, nodeI );
+                        if ( decField.IsUnion ) {
+                            for ( int idx = 0; idx < decField.Body.Count; idx++ ) {
+                                bitOffset = bitOffsetUnion;
+                                BindDecoderSub( decField.Body[idx], ref bitOffset, nodeI );
+                                /* Update max bit offset */
+                                if ( bitOffsetUnionMax < bitOffset ) { bitOffsetUnionMax = bitOffset; }
+                                else { bitOffset = bitOffsetUnionMax; }
+                            }
+                        } else {
+                            for ( int idx = 0; idx < decField.Body.Count; idx++ ) {
+                                BindDecoderSub( decField.Body[idx], ref bitOffset, nodeI );
+                            }
                         }
                     }
                 } else {
