@@ -21,7 +21,6 @@ namespace decoder {
         /// <param name="atox"></param>
         /// <param name="strAtoxParams"></param>
         public void ParseParamsOfAtox(string strAtoxParams, ref List<dObject> ownTypes) {
-            string  strName         = "---";
             bool    isPointer       = false;
             int     noUsedBits      = -1;
             string  strNoElements   = "1";

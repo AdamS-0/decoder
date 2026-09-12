@@ -78,7 +78,7 @@ namespace decoder {
                         ((object[])this.Value)[idx] = this.Raw[idx];
                     }
                 }
-            } catch ( Exception ex ) {}
+            } catch { }
         }
         
         public bool TryDecodeDataInternal(ref Byte[] arrIn, ref int idByte, ref int idBit) {
@@ -124,7 +124,7 @@ namespace decoder {
                                 unchecked {
                                     elRaw = elRaw + (UInt64)(1UL << bitIdInEl);
                                 }
-                            } catch (Exception ex) { }
+                            } catch { }
                         }
                     }
                     this.Raw[elId] = elRaw;

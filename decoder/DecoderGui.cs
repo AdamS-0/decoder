@@ -94,7 +94,7 @@ namespace decoder {
                 
                 rtbRawData.DeselectAll();
                 
-            } catch (Exception ex) {}
+            } catch { }
             rtbRawData.ResumeDrawing();
         }
 
@@ -204,7 +204,7 @@ namespace decoder {
                 Byte[] dataBytes = StringToByteArray(strData);
                 _decCurrent.TryDecodeData( dataBytes );
                 structInfoView1.Refresh();
-            } catch (Exception ex) { }
+            } catch { }
         }
         
         static byte[] StringToByteArray(string hex) {

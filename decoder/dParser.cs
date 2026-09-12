@@ -8,6 +8,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text.RegularExpressions;
 
 namespace decoder {
@@ -26,6 +27,7 @@ namespace decoder {
         
         public dObject ParseSource(string strSrc) {
             /* 1. Process PRECOMPILERS */
+            ProcessPrecompilers( ref strSrc );
             
             dObject root = new dObject();
             /* 2. Get into srouce header file */
@@ -34,11 +36,8 @@ namespace decoder {
                 if ( root.Body.Count == 1 ) {
                     root = root.Body[0];
                 }
-//                _ownTypes.Add( root );
                 return root;
-            } catch (Exception ex) {
-                
-            }
+            } catch { }
             return null;
         }
         
@@ -147,6 +146,56 @@ namespace decoder {
                 }
             }
             return -1;
+        }
+        
+        
+        void ProcessPrecompilers( ref string strSrc ) {
+            const string strMacroBase = "#define";
+            
+            int idxMacroStart = -1;
+            int idxEndLine = -1;
+            while ( ( idxMacroStart = strSrc.IndexOf( strMacroBase ) ) >= 0 ) {
+                idxEndLine = strSrc.IndexOf( '\n', idxMacroStart );
+                if ( idxEndLine == -1 ) { idxEndLine = strSrc.Length; }
+                /* Found macro */
+                /* TODO At this moment only one line macros are supported */
+                string strMacro = strSrc.Substring( idxMacroStart, idxEndLine - idxMacroStart );
+                
+                /* Cut off found macro */
+                strSrc = strSrc.Substring(0, idxMacroStart) + strSrc.Substring( idxEndLine + 1 );
+                
+                Macro macro = Macro.ParseStr( strMacro );
+                if ( macro == null ) { continue; }
+                strSrc = Regex.Replace( strSrc, "\\b" + macro.Name + "\\b", macro.Value );
+            }
+        }
+    }
+    
+    class Macro {
+        public string Name      = "";
+        public string Value     = "";
+        public string ValueRaw  = "";
+        
+        public static Macro ParseStr(string strRawMacro) {
+            int idxSpace = strRawMacro.IndexOf( ' ' );
+            if ( idxSpace == -1 ) { return null; }
+            strRawMacro = strRawMacro.Substring( idxSpace + 1 );
+            
+            if ( ( idxSpace = strRawMacro.IndexOf( ' ' ) ) == -1 ) { return null; }
+            
+            Macro m     = new Macro();
+            m.Name      = strRawMacro.Substring( 0, idxSpace ).Trim(' ');
+            m.ValueRaw  = strRawMacro.Substring( idxSpace );
+            
+            m.ValueRaw = m.ValueRaw.Replace( '\r', ' ' );
+            m.ValueRaw = m.ValueRaw.Replace( '\t', ' ' );
+            m.ValueRaw = m.ValueRaw.Replace( '\n', ' ' );
+            
+            DataTable dt = new DataTable();
+            try {
+                m.Value = dt.Compute( m.ValueRaw, "" ).ToString();
+            } catch (Exception ex) { m.Value = m.ValueRaw; }
+            return m;
         }
     }
 }
