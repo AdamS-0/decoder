@@ -220,33 +220,33 @@ namespace decoder {
         }
         
         
-        VisBox.PushButtonManager _pushBtnMngr_decoder = new PushButtonManager();
-        private static int _pushBtnTotCntr = 0;
+        private int _pushBtnTotCntr = 0;
         public void AddDecoder(ref dObject dec) {
-            VisBox.PushButton pushBtn = new PushButton();
-            pushBtn.Text = dec.Name.Length == 0 ? ( "pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;
-            pushBtn.Tag = dec;
-            pushBtn.Dock = DockStyle.Top;
-            pushBtn.ColorButton = SystemColors.Control;
-            pushBtn.Height = 20;
-            pushBtn.Click += delegate (object sender, EventArgs e) {
-                if ( pushBtn.Tag != null ) {
-                    try {
-                        this.BindDecoder( (dObject)(pushBtn.Tag) );
-                        TryDecodeRawData();
-                    } catch {}
+            if ( dec.IsEnum ) {
+                TreeNode nodePattern = new TreeNode();
+                nodePattern.Text = dec.Name.Length == 0 ? ( "enum pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;                
+                trVwPatterns.Nodes.Add( nodePattern );
+                for ( int idx = 0; idx < dec.Body.Count; idx++ ) {
+                    TreeNode nodeEnumI = new TreeNode();
+                    nodeEnumI.Text = dec.Body[idx].Name + dec.Body[idx].Value;
+                    nodePattern.Nodes.Add( nodeEnumI );
                 }
-            };
-            
-            _pushBtnMngr_decoder.AddButton( pushBtn );
-            pushBtn.PushButtonManager = _pushBtnMngr_decoder;
-            
-            grpBxPatterns.Controls.Add( pushBtn );
-            
-            _decoders.Add( dec );
-            
-            BindDecoder( dec );
-            _pushBtnMngr_decoder.OneElementChanged( pushBtn );
+            } else if ( dec.IsStruct || dec.IsUnion ) {
+                TreeNode nodePattern = new TreeNode();
+                
+                nodePattern.Text = dec.Name.Length == 0 ? ( "struct pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;
+                nodePattern.Tag = dec;
+                
+                trVwPatterns.Nodes.Add( nodePattern );
+                _decoders.Add( dec );
+                
+                BindDecoder( dec );
+            } else {
+                for ( int idx = 0; idx < dec.Body.Count; idx++ ) {
+                    dObject dObj = dec.Body[idx];
+                    AddDecoder( ref dObj );
+                }
+            }
         }
         
         
@@ -323,6 +323,30 @@ namespace decoder {
             _cntrPaints++;
         }
 
+        void TrVwPatternsNodeMouseClick ( object sender, TreeNodeMouseClickEventArgs e ) {
+//            TreeNode node = trVwPatterns.SelectedNode;
+//            if ( node == null ) { return; }
+//            
+//            if ( node.Tag != null ) {
+//                try {
+//                    this.BindDecoder( (dObject)(node.Tag) );
+//                    TryDecodeRawData();
+//                } catch {}
+//            }
+        }
+        
+        void TrVwPatternsMouseUp ( object sender, MouseEventArgs e ) {
+            TreeNode node = trVwPatterns.SelectedNode;
+            if ( node == null ) { return; }
+            
+            if ( node.Tag != null ) {
+                try {
+                    this.BindDecoder( (dObject)(node.Tag) );
+                    TryDecodeRawData();
+                } catch {}
+            }
+        }
+        
         
         
     }

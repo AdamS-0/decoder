@@ -36,6 +36,7 @@ namespace decoder
         private System.Windows.Forms.ToolStripDropDownButton tlStrpMenuData;
         private System.Windows.Forms.ToolStripMenuItem littleEndianToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tlStrpDataHighlightFieldsBytes;
+        private System.Windows.Forms.TreeView trVwPatterns;
         
         /// <summary>
         /// Disposes resources used by the form.
@@ -76,6 +77,7 @@ namespace decoder
             this.rtbRawData = new System.Windows.Forms.RichTextBox();
             this.splitter1 = new System.Windows.Forms.Splitter();
             this.grpBxPatterns = new System.Windows.Forms.GroupBox();
+            this.trVwPatterns = new System.Windows.Forms.TreeView();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tlStpMenuPatterns = new System.Windows.Forms.ToolStripDropDownButton();
             this.tlStrpBtnPatternNew = new System.Windows.Forms.ToolStripMenuItem();
@@ -90,6 +92,7 @@ namespace decoder
             this.ctxMnTreeDetailView.SuspendLayout();
             this.pMain.SuspendLayout();
             this.grpBxRawData.SuspendLayout();
+            this.grpBxPatterns.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -217,6 +220,7 @@ namespace decoder
             // 
             // grpBxPatterns
             // 
+            this.grpBxPatterns.Controls.Add(this.trVwPatterns);
             this.grpBxPatterns.Dock = System.Windows.Forms.DockStyle.Left;
             this.grpBxPatterns.Location = new System.Drawing.Point(3, 3);
             this.grpBxPatterns.Name = "grpBxPatterns";
@@ -224,6 +228,16 @@ namespace decoder
             this.grpBxPatterns.TabIndex = 1;
             this.grpBxPatterns.TabStop = false;
             this.grpBxPatterns.Text = "Patterns";
+            // 
+            // trVwPatterns
+            // 
+            this.trVwPatterns.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.trVwPatterns.Location = new System.Drawing.Point(3, 16);
+            this.trVwPatterns.Name = "trVwPatterns";
+            this.trVwPatterns.Size = new System.Drawing.Size(126, 329);
+            this.trVwPatterns.TabIndex = 0;
+            this.trVwPatterns.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.TrVwPatternsNodeMouseClick);
+            this.trVwPatterns.MouseUp += new System.Windows.Forms.MouseEventHandler(this.TrVwPatternsMouseUp);
             // 
             // toolStrip1
             // 
@@ -333,6 +347,7 @@ namespace decoder
             this.ctxMnTreeDetailView.ResumeLayout(false);
             this.pMain.ResumeLayout(false);
             this.grpBxRawData.ResumeLayout(false);
+            this.grpBxPatterns.ResumeLayout(false);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
