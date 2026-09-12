@@ -19,8 +19,8 @@ namespace decoder {
             toObj.Name      = this.Name;
             toObj.Type      = this.Type;
             toObj.dObjRaw   = this.dObjRaw;
-            toObj.Raw       = null;
-            toObj.Value     = null;
+            toObj.Raw       = this.Raw;
+            toObj.Value     = this.Value;
             
             if ( this.Type == DecType.Complex ) {
                 toObj.Body.Clear();

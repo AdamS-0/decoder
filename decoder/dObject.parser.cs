@@ -76,6 +76,8 @@ namespace decoder {
                 }
             }
             
+            if ( partsArr.Length == 0 ) { return; }
+            
             if ( parts.Contains(":") ) {
                 /* this is a bitfield! */
                 int idxBitfield = parts.IndexOf(":");
@@ -194,7 +196,7 @@ namespace decoder {
             }
             
             
-            if ( this.IsEnum && !this.IsTypedef ) {
+            if ( this.IsEnum && this.IsTypedef ) {
                 int enumerator = 0;
                 for ( int idxBody = 0; idxBody < this.Body.Count; idxBody++ ) {
                     if ( this.Body[idxBody].Value == null ) {

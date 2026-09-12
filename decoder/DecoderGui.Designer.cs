@@ -37,6 +37,8 @@ namespace decoder
         private System.Windows.Forms.ToolStripMenuItem littleEndianToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tlStrpDataHighlightFieldsBytes;
         private System.Windows.Forms.TreeView trVwPatterns;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripStatusLabel tlStrpLblStatus;
         
         /// <summary>
         /// Disposes resources used by the form.
@@ -60,11 +62,11 @@ namespace decoder
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem1 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem2 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem3 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem4 = new VisBox.TreeDetailsViewColumnItem();
-            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem5 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem6 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem7 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem8 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem9 = new VisBox.TreeDetailsViewColumnItem();
+            VisBox.TreeDetailsViewColumnItem treeDetailsViewColumnItem10 = new VisBox.TreeDetailsViewColumnItem();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DecoderGui));
             this.structInfoView1 = new VisBox.TreeDetailsView();
             this.ctxMnTreeDetailView = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -89,6 +91,8 @@ namespace decoder
             this.tlStrpDataHighlightFieldsBytes = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tlStrpLbl = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tlStrpLblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.ctxMnTreeDetailView.SuspendLayout();
             this.pMain.SuspendLayout();
             this.grpBxRawData.SuspendLayout();
@@ -99,31 +103,31 @@ namespace decoder
             // 
             // structInfoView1
             // 
-            treeDetailsViewColumnItem1.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem1.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem1.Text = "Name";
-            treeDetailsViewColumnItem1.Width = 95;
-            treeDetailsViewColumnItem2.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem2.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem2.Text = "Type";
-            treeDetailsViewColumnItem2.Width = 80;
-            treeDetailsViewColumnItem3.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem3.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem3.Text = "Bits";
-            treeDetailsViewColumnItem3.Width = 35;
-            treeDetailsViewColumnItem4.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem4.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem4.Text = "Value";
-            treeDetailsViewColumnItem4.Width = 75;
-            treeDetailsViewColumnItem5.Font = new System.Drawing.Font("Arial", 10F);
-            treeDetailsViewColumnItem5.ForeColor = System.Drawing.Color.Black;
-            treeDetailsViewColumnItem5.Text = "Raw";
-            treeDetailsViewColumnItem5.Width = 95;
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem1);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem2);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem3);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem4);
-            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem5);
+            treeDetailsViewColumnItem6.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem6.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem6.Text = "Name";
+            treeDetailsViewColumnItem6.Width = 95;
+            treeDetailsViewColumnItem7.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem7.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem7.Text = "Type";
+            treeDetailsViewColumnItem7.Width = 80;
+            treeDetailsViewColumnItem8.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem8.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem8.Text = "Bits";
+            treeDetailsViewColumnItem8.Width = 35;
+            treeDetailsViewColumnItem9.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem9.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem9.Text = "Value";
+            treeDetailsViewColumnItem9.Width = 75;
+            treeDetailsViewColumnItem10.Font = new System.Drawing.Font("Arial", 10F);
+            treeDetailsViewColumnItem10.ForeColor = System.Drawing.Color.Black;
+            treeDetailsViewColumnItem10.Text = "Raw";
+            treeDetailsViewColumnItem10.Width = 95;
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem6);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem7);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem8);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem9);
+            this.structInfoView1.Columns.Add(treeDetailsViewColumnItem10);
             this.structInfoView1.ContextMenuStrip = this.ctxMnTreeDetailView;
             this.structInfoView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.structInfoView1.FlatStyle = VisBox.VisElement.VisFlatStyle.Collapsed;
@@ -203,7 +207,7 @@ namespace decoder
             // rtbRawData
             // 
             this.rtbRawData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rtbRawData.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.rtbRawData.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.rtbRawData.Location = new System.Drawing.Point(3, 16);
             this.rtbRawData.Name = "rtbRawData";
             this.rtbRawData.Size = new System.Drawing.Size(397, 81);
@@ -320,7 +324,9 @@ namespace decoder
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tlStrpLbl});
+            this.tlStrpLbl,
+            this.toolStripStatusLabel1,
+            this.tlStrpLblStatus});
             this.statusStrip1.Location = new System.Drawing.Point(0, 379);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(544, 22);
@@ -333,6 +339,20 @@ namespace decoder
             this.tlStrpLbl.Name = "tlStrpLbl";
             this.tlStrpLbl.Size = new System.Drawing.Size(76, 17);
             this.tlStrpLbl.Text = "Status: done";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(328, 17);
+            this.toolStripStatusLabel1.Spring = true;
+            // 
+            // tlStrpLblStatus
+            // 
+            this.tlStrpLblStatus.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tlStrpLblStatus.Name = "tlStrpLblStatus";
+            this.tlStrpLblStatus.Size = new System.Drawing.Size(125, 17);
+            this.tlStrpLblStatus.Text = "toolStripStatusLabel2";
             // 
             // DecoderGui
             // 

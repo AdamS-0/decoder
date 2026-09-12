@@ -16,12 +16,12 @@ namespace decoder {
     partial class dObject {
         
         public void ClearRaws() {
-            if ( this.Type == dObject.DecType.Complex ) {
+            if ( this.Type == dObject.DecType.Complex && !this.IsEnum ) {
                 foreach ( dObject dObj in this.Body ) { dObj.ClearRaws(); }
             }
             
             
-            for( int elId = 0; elId < this.Body.Count; elId++ ) {
+            for( int elId = 0; elId < this.Body.Count  && !this.IsEnum; elId++ ) {
                 this.Body[elId].ClearRaws();
             }
             
@@ -67,6 +67,28 @@ namespace decoder {
                     case DecType.Integer:
                         for ( int idx = 0; idx < this.NoElements; idx++ ) {
                             ((object[])this.Value)[idx] = InterpretBits( (ulong)this.Raw[idx], this.IsSignedU2, this._elementSizeBits );
+                        }
+                        break;
+                        
+                    case DecType.Complex:
+                        if ( this.IsEnum ) {
+                            for ( int idx = 0; idx < this.NoElements; idx++ ) {
+                                bool foundEnum = false;
+                                try {
+                                    int rawVal = (int)this.Raw[idx];
+                                    for ( int idxBody = 0; idxBody < this.Body.Count && !foundEnum; idxBody++ ) {
+                                        if ( this.Body[idxBody].Value.Equals( rawVal ) ) {
+                                            ((object[])this.Value)[idx] = this.Body[idxBody].Name;
+                                            foundEnum = true;
+                                            break;
+                                        }
+                                    }
+                                } catch (Exception ex) {}
+                                
+                                if ( !foundEnum ) {
+                                    ((object[])this.Value)[idx] = InterpretBits( (ulong)this.Raw[idx], true, this._elementSizeBits );
+                                }
+                            }
                         }
                         break;
                     default:
@@ -126,7 +148,7 @@ namespace decoder {
                 this.Value = new object[this.NoElements];
                 this.Raw = new UInt64[this.NoElements];
             }
-                        
+            
             /* Decode as array (because everything is an array)*/
             for ( int elId = 0; elId < this.NoElements; elId++ ) {
                 UInt64 elRaw = 0;

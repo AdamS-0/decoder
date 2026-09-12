@@ -49,7 +49,10 @@ namespace decoder {
         /// <param name = "ownTypes"></param>
         /// <returns></returns>
         void ParseBlock(string strSrc, ref dObject parent, ref List<dObject> ownTypes) {
+            
             while( strSrc.Length > 0 ) {
+                strSrc = strSrc.Trim( new char[]{'\r', '\n', '\t', ' '} );
+                
                 int idxFirstSemicolon   = -1;
                 int idxFirstSOS         = -1;
                 int idxEndAtox          = -1;
@@ -74,6 +77,29 @@ namespace decoder {
                     strSrc = strSrc.Substring( 0, idxFirstSOS) + strSrc.Substring( idxEOS + 1 );
                     
                     idxEndAtox = strSrc.IndexOf(';') + 1;
+                    {
+                        int idxCommentEnd = -1;
+                        int idxNewLine = strSrc.IndexOf('\n', idxEndAtox);
+                        idxNewLine = ( idxNewLine == -1 ) ? (strSrc.Length) : idxNewLine;
+                        
+                        /* Find one line comment after definition line */
+                        int idxCommentStart = strSrc.Substring(0, idxNewLine).IndexOf("//");
+                        
+                        if ( idxCommentStart == -1 ) {
+                            /* Not found line comment here, so check for start of block comment */
+                            idxCommentStart = strSrc.Substring(0, idxNewLine).IndexOf("/*");
+                            if ( idxCommentStart >= 0 ) {
+                                /* This is block comment! */
+                                idxCommentEnd = strSrc.IndexOf("*/", idxCommentStart);
+                                if      ( idxCommentEnd >=  0 ) { idxCommentEnd += 2; }
+                                else if ( idxCommentEnd == -1 ) { idxCommentEnd = idxNewLine; }
+                                idxEndAtox = idxCommentEnd;
+                            }
+                        } else {
+                            /* This is one line comment */
+                            idxEndAtox = idxNewLine;
+                        }
+                    }
                 } else if( ( idxFirstSemicolon > 0 ) && ( idxFirstSemicolon < strSrc.Length ) ) {
                     int idxNewLine = strSrc.IndexOf('\n', idxFirstSemicolon);
                     if ( idxNewLine == -1 ) { idxNewLine = strSrc.Length - 1; }

@@ -32,6 +32,7 @@ namespace decoder {
         }
         
         private void ItemMouseEnter( object sender, EventArgs e ) {
+            cntrHighlightChanged++;
             TreeDetailsViewItem node = sender as TreeDetailsViewItem;
             try {
                 tlStrpLbl.Text = "Item: " + node.Text + " @ " + node.Tag3 + " bits, offset: " + node.Tag2 + " bits";
@@ -99,6 +100,9 @@ namespace decoder {
         }
 
         private void BindDecoderSub(dObject decField, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
+            cntrBinds++;
+            UpdateStats();
+            
             int bitOffsetUnion = bitOffset;
             int bitOffsetUnionMax = bitOffset;
             
@@ -199,6 +203,8 @@ namespace decoder {
         
         private static readonly Regex _rgxOneNibbles = new Regex(@" ([0-9a-fA-F]) ", RegexOptions.Compiled);
         public void TryDecodeRawData() {
+            cntrDecodes++;
+            UpdateStats();
             try {
                 if ( _decCurrent == null ) { 
                     /* Decoder not defined */
@@ -232,12 +238,11 @@ namespace decoder {
             return bytes;
         }
         
-        
-        private int _pushBtnTotCntr = 0;
+        int _patternCntr = 0;
         public void AddDecoder(ref dObject dec) {
             if ( dec.IsEnum ) {
                 TreeNode nodePattern = new TreeNode();
-                nodePattern.Text = dec.Name.Length == 0 ? ( "enum pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;                
+                nodePattern.Text = dec.Name.Length == 0 ? ( "enum pattern" + (++_patternCntr).ToString() ) : dec.Name;                
                 trVwPatterns.Nodes.Add( nodePattern );
                 for ( int idx = 0; idx < dec.Body.Count; idx++ ) {
                     TreeNode nodeEnumI = new TreeNode();
@@ -247,7 +252,7 @@ namespace decoder {
             } else if ( dec.IsStruct || dec.IsUnion ) {
                 TreeNode nodePattern = new TreeNode();
                 
-                nodePattern.Text = dec.Name.Length == 0 ? ( "struct pattern" + (++_pushBtnTotCntr).ToString() ) : dec.Name;
+                nodePattern.Text = dec.Name.Length == 0 ? ( "struct pattern" + (++_patternCntr).ToString() ) : dec.Name;
                 nodePattern.Tag = dec;
                 
                 trVwPatterns.Nodes.Add( nodePattern );
@@ -329,9 +334,9 @@ namespace decoder {
             }
         }
         
-        private int _cntrPaints = 0;
         void StructInfoView1Paint ( object sender, PaintEventArgs e ) {
-            _cntrPaints++;
+            cntrPaints++;
+            UpdateStats();
         }
 
         void TrVwPatternsNodeMouseClick ( object sender, TreeNodeMouseClickEventArgs e ) {
@@ -358,6 +363,14 @@ namespace decoder {
             }
         }
         
+        int cntrPaints  = 0;
+        int cntrDecodes = 0;
+        int cntrBinds   = 0;
+        int cntrHighlightChanged = 0;
+        
+        void UpdateStats() {
+            tlStrpLblStatus.Text = "Paints: " + cntrPaints + ", Decodes: " + cntrDecodes + ", Binds: " + cntrBinds + ", Highlight: " + cntrHighlightChanged;
+        }
         
         
     }
