@@ -10,9 +10,11 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using VisBox;
+using System.Security.Cryptography;
 
 namespace decoder {
     /// <summary>
@@ -32,6 +34,8 @@ namespace decoder {
         }
         
         private void ItemMouseEnter( object sender, EventArgs e ) {
+            int selStart = rtbRawData.SelectionStart;
+            int selLen   = rtbRawData.SelectionLength;
             cntrHighlightChanged++;
             TreeDetailsViewItem node = sender as TreeDetailsViewItem;
             try {
@@ -96,6 +100,8 @@ namespace decoder {
                 rtbRawData.DeselectAll();
                 
             } catch { }
+            rtbRawData.SelectionStart = selStart;
+            rtbRawData.SelectionLength = selLen;
             rtbRawData.ResumeDrawing();
         }
 
@@ -183,9 +189,11 @@ namespace decoder {
         public void BindDecoder(dObject dec) {
             _decCurrent = dec;
             structInfoView1.SuspendDrawing();
+            structInfoView1.Visible = false;
             structInfoView1.Nodes.Clear();
             int bitOffset = 0;
             BindDecoderSub( dec, ref bitOffset );
+            structInfoView1.Visible = true;
             structInfoView1.ResumeDrawing();
             structInfoView1.Refresh();
         }
@@ -202,9 +210,8 @@ namespace decoder {
         
         
         private static readonly Regex _rgxOneNibbles = new Regex(@" ([0-9a-fA-F]) ", RegexOptions.Compiled);
+        string _strLastHash = "";
         public void TryDecodeRawData() {
-            cntrDecodes++;
-            UpdateStats();
             try {
                 if ( _decCurrent == null ) { 
                     /* Decoder not defined */
@@ -220,9 +227,17 @@ namespace decoder {
                 strData = _rgxOneNibbles.Replace( strData, "0$1" );
                 strData = strData.Replace(" ", "");
                 
-                Byte[] dataBytes = StringToByteArray(strData);
-                _decCurrent.TryDecodeData( dataBytes );
-                structInfoView1.Refresh();
+                strData = strData.Trim( new char[] { ' ', '\r', '\n', '\t' } );
+                
+                string strHash = ComputeHash( strData );
+                if ( !_strLastHash.Equals( strHash ) ) {
+                    _strLastHash = strHash;
+                    Byte[] dataBytes = StringToByteArray(strData);
+                    cntrDecodes++;
+                    UpdateStats();
+                    _decCurrent.TryDecodeData( dataBytes );
+                    structInfoView1.Refresh();
+                }
             } catch { }
         }
         
@@ -236,6 +251,23 @@ namespace decoder {
                 }
             } catch {}
             return bytes;
+        }
+        
+        private string ComputeHash ( string input ) {
+            if ( input == null ) return string.Empty;
+
+            // .NET 4.0 requires explicitly creating and disposing the provider
+            using ( SHA256 sha256 = SHA256.Create() ) {
+                byte[] inputBytes = Encoding.UTF8.GetBytes( input );
+                byte[] hashBytes = sha256.ComputeHash( inputBytes );
+            
+                // .NET 4.0 alternative to Convert.ToHexString
+                StringBuilder sb = new StringBuilder();
+                for ( int i = 0; i < hashBytes.Length; i++ ) {
+                    sb.Append( hashBytes [ i ].ToString( "X2" ) );
+                }
+                return sb.ToString();
+            }
         }
         
         int _patternCntr = 0;
