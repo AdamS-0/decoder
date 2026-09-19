@@ -46,6 +46,8 @@ namespace decoder {
             _leftMenu.Items.Add( "Get pattern", null, leftMenu_getPattern );
             _leftMenu.Items.Add( "Get data", null, leftMenu_getData );
             
+            _leftMenu.MouseLeave += delegate(object sneder, EventArgs e) { _leftMenu.Hide(); };
+            
             timerKeys.Interval = 50;
             timerKeys.Tick += timerKeys_TestForKeys;
             timerKeys.Start();

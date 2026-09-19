@@ -387,7 +387,7 @@ namespace decoder {
 //            }
         }
         
-        void TrVwPatternsMouseUp ( object sender, MouseEventArgs e ) {
+        void TrVwPatternsAfterSelect ( object sender, TreeViewEventArgs e ) {
             TreeNode node = trVwPatterns.SelectedNode;
             if ( node == null ) { return; }
             
