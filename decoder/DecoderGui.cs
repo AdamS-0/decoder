@@ -314,6 +314,10 @@ namespace decoder {
             TreeNode node = trVwPatterns.SelectedNode;
             if ( node == null ) { return; }
             node.Remove();
+            
+            try {
+                 _parser._ownTypes.Remove(_decCurrent);
+            } catch {}
 
             _decoders.Remove( _decCurrent );
             _decCurrent = _decoders[0];

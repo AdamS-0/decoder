@@ -18,7 +18,7 @@ namespace decoder {
     public class dParser {
         protected static readonly Regex _rgxSpaceCutter = new Regex(@"\s+", RegexOptions.Compiled);
         
-        List<dObject> _ownTypes = new List<dObject>();
+        public List<dObject> _ownTypes = new List<dObject>();
         
         public dParser() {
             
@@ -149,7 +149,13 @@ namespace decoder {
                     atox.ParseParamsOfAtox( strAtoxParams, ref ownTypes );
                     parent.Body.Add( atox );
                     if ( atox.IsTypedef ) {
-                        ownTypes.Add( atox );
+                        dObject prevAtox = ownTypes.Find( o => o.Name == atox.Name );
+                        if ( prevAtox == null ) {
+                            ownTypes.Add( atox );
+                        } else {
+                            /* Replace with new instance */
+                            prevAtox = atox;
+                        }
                     }
                 }
                 

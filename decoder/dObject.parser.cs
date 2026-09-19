@@ -15,19 +15,21 @@ namespace decoder {
     /// </summary>
     partial class dObject {
         
-        /// <summary>
-        /// Parse parameters of given axtox's params string, e.g. "typedef struct MyStruct_t;" without its body of course
-        /// </summary>
-        /// <param name="atox"></param>
-        /// <param name="strAtoxParams"></param>
-        public void ParseParamsOfAtox(string strAtoxParams, ref List<dObject> ownTypes) {
-            bool    isPointer       = false;
-            int     noUsedBits      = -1;
-            string  strNoElements   = "1";
-            string  strComment      = "";
-            string  strDObjRaw      = strAtoxParams;
-            this._elementSizeBits = 32;
-            
+        private static void PrepareInputString(ref string strAtoxParams) {
+            /* Cut off ';' and multiple spaces */
+            strAtoxParams = strAtoxParams.Replace( "\r", " " );
+            strAtoxParams = strAtoxParams.Replace( "\n", " " );
+            strAtoxParams = strAtoxParams.Replace( "\t", " " );
+            strAtoxParams = strAtoxParams.Replace( "*", " * " );
+            strAtoxParams = strAtoxParams.Replace( "[", " [ " );
+            strAtoxParams = strAtoxParams.Replace( "]", " ] " );
+            strAtoxParams = _rgxSpaceCutter.Replace( strAtoxParams, " " );
+            strAtoxParams = strAtoxParams.Replace( ";", "" );
+            strAtoxParams = strAtoxParams.Replace( ",", "" );
+        }
+        
+        private static string GetCommentsFromStrAtox(ref string strAtoxParams) {
+            string strComment = "";
             /* Get comments from sentence */
             int idxCommentStart = -1;
             while ( ( idxCommentStart = strAtoxParams.IndexOf("//") ) >= 0 ) {
@@ -53,66 +55,19 @@ namespace decoder {
                 strAtoxParams = newStrAtox;
             }
             
-            /* Cut off ';' and multiple spaces */
-            strAtoxParams = strAtoxParams.Replace( "\r", " " );
-            strAtoxParams = strAtoxParams.Replace( "\n", " " );
-            strAtoxParams = strAtoxParams.Replace( "\t", " " );
-            strAtoxParams = strAtoxParams.Replace( "*", " * " );
-            strAtoxParams = strAtoxParams.Replace( "[", " [ " );
-            strAtoxParams = strAtoxParams.Replace( "]", " ] " );
-            strAtoxParams = _rgxSpaceCutter.Replace( strAtoxParams, " " );
-            strAtoxParams = strAtoxParams.Replace( ";", "" );
-            strAtoxParams = strAtoxParams.Replace( ",", "" );
-            
-            string[] partsArr = strAtoxParams.Split(' ');
-            if ( partsArr.Length == 0 ) { return; }
-            
-            List<string> parts = new List<string>(partsArr);
-            
+            return strComment;
+        }
+        
+        private static void RemoveEmptyParts(ref List<string> parts) {
             for ( int idx = 0; idx < parts.Count; idx++ ) {
                 if ( parts[idx].Length == 0 ) {
                     parts.RemoveAt( idx );
                     idx--;
                 }
             }
-            
-            if ( partsArr.Length == 0 ) { return; }
-            
-            if ( parts.Contains(":") ) {
-                /* this is a bitfield! */
-                int idxBitfield = parts.IndexOf(":");
-                if ( idxBitfield < 0 || idxBitfield >= ( parts.Count - 1 ) ) { throw new Exception( "Bitfield size missing!" ); }
-                
-                noUsedBits = Convert.ToInt32( parts[idxBitfield + 1] );
-                parts.RemoveAt( idxBitfield );
-            }
-            
-            if ( parts.Contains("[") ) {
-                /* this is a bitfield! */
-                int idxNoElements = parts.IndexOf("[");
-                if ( idxNoElements < 0 || idxNoElements >= ( parts.Count - 1 ) ) { throw new Exception( "Size array missing!" ); }
-                
-                strNoElements = parts[idxNoElements + 1];
-                parts.RemoveAt( idxNoElements );
-                int idxEOS = parts.IndexOf("]");
-                if ( ( idxEOS >= 0 ) && ( idxEOS < parts.Count ) ) {
-                    parts.RemoveAt( idxEOS );
-                }
-            } else {
-                strNoElements = "1";
-            }
-            
-            if ( parts.Contains("*") ) {
-                /* this is a pointer! */
-                int idxAsterix = parts.IndexOf("*");
-                if ( ( idxAsterix >= 0 ) && ( idxAsterix < parts.Count ) ) {
-                    parts.RemoveAt( idxAsterix );
-                }
-                isPointer = true;
-            } else {
-                isPointer = false;
-            }
-            
+        }
+        
+        private void ProcessBasicKeyWords(ref List<string> parts) {
             /* Storage class */
             if ( parts.RemoveIfContains( "typedef"  ) ) { this.IsTypedef = true; }
             if ( parts.RemoveIfContains( "extern"   ) ) { }
@@ -154,9 +109,11 @@ namespace decoder {
             if ( parts.RemoveIfContains( "struct"   ) ) { this.Type = DecType.Complex; this.IsStruct = true; }
             if ( parts.RemoveIfContains( "enum"     ) ) { this.Type = DecType.Complex; this.IsEnum  = true; }
             if ( parts.RemoveIfContains( "union"    ) ) { this.Type = DecType.Complex; this.IsUnion = true; }
-            
+        }
+        
+        private void ProcessComplexEntities(ref List<string> parts, ref List<dObject> ownTypes) {
+            if ( this.IsTypedef && this.IsTypedef ) { return; }
             foreach ( dObject dObj in ownTypes ) {
-                
                 for ( int idx = 0; idx < parts.Count; idx++ ) {
                     if ( parts[idx].Equals( dObj.Name ) ) {
                         /* This is a type that was defined previously! */
@@ -169,9 +126,9 @@ namespace decoder {
                 }
                 if ( parts.Count == 0 ) { break; }
             }
-            
-            this.IsPointer = isPointer;
-            
+        }
+        
+        private void TryProcessAsArray(string strNoElements, ref List<dObject> ownTypes) {
             try {
                 this.NoElements = Convert.ToUInt16( strNoElements );
             } catch {
@@ -189,15 +146,50 @@ namespace decoder {
                     }
                 }
             }
-            
-            if ( this.IsPointer ) {
-                this._elementSizeBits = 32;
-                this.NoBitsUsed = 32;
+        }
+        
+        private void TryGetNoUsedBits(ref int noUsedBits, ref List<string> parts) {
+            if ( parts.Contains(":") ) {
+                /* this is a bitfield! */
+                int idxBitfield = parts.IndexOf(":");
+                if ( idxBitfield < 0 || idxBitfield >= ( parts.Count - 1 ) ) { throw new Exception( "Bitfield size missing!" ); }
+                
+                noUsedBits = Convert.ToInt32( parts[idxBitfield + 1] );
+                parts.RemoveAt( idxBitfield );
             }
-            
-            
-            if ( this.IsEnum && this.IsTypedef ) {
-                int enumerator = 0;
+        }
+        
+        private void TryGetNoElements(ref string strNoElements, ref List<string> parts) {
+            if ( parts.Contains("[") ) {
+                /* this is an array! */
+                int idxNoElements = parts.IndexOf("[");
+                if ( idxNoElements < 0 || idxNoElements >= ( parts.Count - 1 ) ) { throw new Exception( "Size array missing!" ); }
+                
+                strNoElements = parts[idxNoElements + 1];
+                parts.RemoveAt( idxNoElements );
+                int idxEOS = parts.IndexOf("]");
+                if ( ( idxEOS >= 0 ) && ( idxEOS < parts.Count ) ) {
+                    parts.RemoveAt( idxEOS );
+                }
+            } else {
+                strNoElements = "1";
+            }
+        }
+        
+        private bool GetIsPointerType(ref List<string> parts) {
+            if ( parts.Contains("*") ) {
+                /* this is a pointer! */
+                int idxAsterix = parts.IndexOf("*");
+                if ( ( idxAsterix >= 0 ) && ( idxAsterix < parts.Count ) ) {
+                    parts.RemoveAt( idxAsterix );
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        private void ProcessEnumTypedef(ref List<dObject> ownTypes) {
+            int enumerator = 0;
                 for ( int idxBody = 0; idxBody < this.Body.Count; idxBody++ ) {
                     if ( this.Body[idxBody].Value == null ) {
                         this.Body[idxBody].Value = enumerator;
@@ -228,17 +220,49 @@ namespace decoder {
                     }
                     enumerator++;
                 }
+        }
+        
+        /// <summary>
+        /// Parse parameters of given axtox's params string, e.g. "typedef struct MyStruct_t;" without its body of course
+        /// </summary>
+        /// <param name="atox"></param>
+        /// <param name="strAtoxParams"></param>
+        public void ParseParamsOfAtox(string strAtoxParams, ref List<dObject> ownTypes) {
+            bool    isPointer       = false;
+            int     noUsedBits      = -1;
+            string  strNoElements   = "1";
+            string  strComment      = "";
+            string  strDObjRaw      = strAtoxParams;
+            this._elementSizeBits   = 32;
+            
+            strComment = GetCommentsFromStrAtox(ref strAtoxParams);
+            PrepareInputString(ref strAtoxParams);
+            
+            string[] partsArr = strAtoxParams.Split(' ');
+            if ( partsArr.Length == 0 ) { return; }
+            
+            List<string> parts = new List<string>(partsArr);
+            RemoveEmptyParts( ref parts );
+            
+            if ( partsArr.Length == 0 ) { return; }
+            
+            TryGetNoUsedBits(ref noUsedBits, ref parts);
+            TryGetNoElements(ref strNoElements, ref parts);
+            isPointer = GetIsPointerType(ref parts);
+            
+            ProcessBasicKeyWords( ref parts );
+            ProcessComplexEntities( ref parts, ref ownTypes );
+            TryProcessAsArray(strNoElements, ref ownTypes);
+            this.IsPointer = isPointer;
+            if ( this.IsPointer ) {
+                this._elementSizeBits = 32;
+                this.NoBitsUsed = 32;
             }
             
-            this.Comment    = strComment;
-            this.dObjRaw    = strDObjRaw;
-            // __ANON.STRUCT__
-            // __ANON.UNION__
-            // __ANON__
+            if ( this.IsEnum && this.IsTypedef ) { ProcessEnumTypedef( ref ownTypes ); }
             
-            // ?STRUCT?
-            // ?UNION?
-            // ??
+            this.Comment = strComment;
+            this.dObjRaw = strDObjRaw;
             
             if ( parts.Count == 0 ) {
                 this.Name = "?";
@@ -251,7 +275,7 @@ namespace decoder {
             this.NoBitsUsed = noUsedBits;
             
             /* There should be at least one element that was not recognised - name */
-            this.Name       = parts[0];
+            this.Name = parts[0];
         }
         
         
