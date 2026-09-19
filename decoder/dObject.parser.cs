@@ -81,26 +81,26 @@ namespace decoder {
             if ( parts.RemoveIfContains( "restrict" ) ) { }
             
             /* Data types */
-            if ( parts.RemoveIfContains( "void"     ) ) { this.Type = DecType.Void          ; this._elementSizeBits = 32; }
-            if ( parts.RemoveIfContains( "char"     ) ) { this.Type = DecType.Char          ; this._elementSizeBits =  8; this.IsSignedU2 = true;  }
+            if ( parts.RemoveIfContains( "void"     ) ) { this.Type = DecType.Void          ; this.ElementSizeBits = 32; }
+            if ( parts.RemoveIfContains( "char"     ) ) { this.Type = DecType.Char          ; this.ElementSizeBits =  8; this.IsSignedU2 = true;  }
             if ( parts.RemoveIfContains( "float"    ) ||
-                 parts.RemoveIfContains( "single"   ) ) { this.Type = DecType.FloatingPoint ; this._elementSizeBits = 32; }
-            if ( parts.RemoveIfContains( "double"   ) ) { this.Type = DecType.FloatingPoint ; this._elementSizeBits = 64; }
-            if ( parts.RemoveIfContains(  "int8_t"  ) ) { this.Type = DecType.Integer       ; this._elementSizeBits =  8; this.IsSignedU2 = true;  }
-            if ( parts.RemoveIfContains( "uint8_t"  ) ) { this.Type = DecType.Integer       ; this._elementSizeBits =  8; this.IsSignedU2 = false; }
-            if ( parts.RemoveIfContains(  "int16_t" ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 16; this.IsSignedU2 = true;  }
-            if ( parts.RemoveIfContains( "uint16_t" ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 16; this.IsSignedU2 = false; }
-            if ( parts.RemoveIfContains(  "int32_t" ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 32; this.IsSignedU2 = true;  }
-            if ( parts.RemoveIfContains( "uint32_t" ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 32; this.IsSignedU2 = false; }
-            if ( parts.RemoveIfContains(  "int64_t" ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 64; this.IsSignedU2 = true;  }
-            if ( parts.RemoveIfContains( "uint64_t" ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 64; this.IsSignedU2 = false; }
-            if ( parts.RemoveIfContains( "int"      ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 32; this.IsSignedU2 = true;  }
-            if ( parts.RemoveIfContains( "short"    ) ) { this.Type = DecType.Integer       ; this._elementSizeBits = 16; this.IsSignedU2 = true;  }
+                 parts.RemoveIfContains( "single"   ) ) { this.Type = DecType.FloatingPoint ; this.ElementSizeBits = 32; }
+            if ( parts.RemoveIfContains( "double"   ) ) { this.Type = DecType.FloatingPoint ; this.ElementSizeBits = 64; }
+            if ( parts.RemoveIfContains(  "int8_t"  ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits =  8; this.IsSignedU2 = true;  }
+            if ( parts.RemoveIfContains( "uint8_t"  ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits =  8; this.IsSignedU2 = false; }
+            if ( parts.RemoveIfContains(  "int16_t" ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 16; this.IsSignedU2 = true;  }
+            if ( parts.RemoveIfContains( "uint16_t" ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 16; this.IsSignedU2 = false; }
+            if ( parts.RemoveIfContains(  "int32_t" ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 32; this.IsSignedU2 = true;  }
+            if ( parts.RemoveIfContains( "uint32_t" ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 32; this.IsSignedU2 = false; }
+            if ( parts.RemoveIfContains(  "int64_t" ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 64; this.IsSignedU2 = true;  }
+            if ( parts.RemoveIfContains( "uint64_t" ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 64; this.IsSignedU2 = false; }
+            if ( parts.RemoveIfContains( "int"      ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 32; this.IsSignedU2 = true;  }
+            if ( parts.RemoveIfContains( "short"    ) ) { this.Type = DecType.Integer       ; this.ElementSizeBits = 16; this.IsSignedU2 = true;  }
             if ( parts.RemoveIfContains( "long"     ) ) { this.Type = DecType.Integer       ; this.IsSignedU2 = true;
                 if ( parts.RemoveIfContains( "long"     ) ) {
-                    this._elementSizeBits = 64; //! "long long" so UInt64
+                    this.ElementSizeBits = 64; //! "long long" so UInt64
                 } else {
-                    this._elementSizeBits = 32;
+                    this.ElementSizeBits = 32;
                 }
             }
             if ( parts.RemoveIfContains( "signed"   ) ) { this.IsSignedU2 = true; }
@@ -112,7 +112,7 @@ namespace decoder {
         }
         
         private void ProcessComplexEntities(ref List<string> parts, ref List<dObject> ownTypes) {
-            if ( this.IsTypedef && this.IsTypedef ) { return; }
+            if ( this.IsTypedef ) { return; }
             foreach ( dObject dObj in ownTypes ) {
                 for ( int idx = 0; idx < parts.Count; idx++ ) {
                     if ( parts[idx].Equals( dObj.Name ) ) {
@@ -137,24 +137,48 @@ namespace decoder {
                 for ( int idxDObj = 0; ( idxDObj < ownTypes.Count ) && !foundReference; idxDObj++ ) {
                     if ( !ownTypes[idxDObj].IsEnum ) { continue; }
                     
-                    for ( int idx = 0; idx < ownTypes[idxDObj].Body.Count; idx++ ) {
-                        if ( ownTypes[idxDObj].Body[idx].Name.Equals( strNoElements ) ) {
-                            this.NoElements = (ushort)(ownTypes[idxDObj].Body[idx].Value);
+                    for ( int idx = 0; idx < ownTypes[idxDObj].Body[0].Count; idx++ ) {
+                        if ( ownTypes[idxDObj].Body[0][idx].Name.Equals( strNoElements ) ) {
+                            this.NoElements = (ushort)(ownTypes[idxDObj].Body[0][idx].Value);
                             foundReference = true;
                             break;
                         }
                     }
                 }
             }
+            
+            if ( ( this.Type == DecType.Complex ) && ( this.NoElements > 1 ) ) {
+                List<List<dObject>> bodyTemp = this.Body;
+                this.Body = new List<List<dObject>>();
+                
+                for (int idxElement = 0; idxElement < this.NoElements; idxElement++ ) {
+                    List<dObject> elBodyList = new List<dObject>();
+                    this.Body.Add( elBodyList );
+                    for (int idx = 0; idx < bodyTemp[0].Count; idx++ ) {
+                        elBodyList.Add( (dObject)bodyTemp[0][idx].Clone() );
+                    }
+                }
+            }
         }
         
-        private void TryGetNoUsedBits(ref int noUsedBits, ref List<string> parts) {
+        private void TryGetValueAfterEqualsSign(ref List<string> parts) {
+            if ( parts.Contains("=") ) {
+                /* this is a bitfield! */
+                int idxEqualsSign = parts.IndexOf("=");
+                if ( idxEqualsSign < 0 || idxEqualsSign >= ( parts.Count - 1 ) ) { throw new Exception( "Value missing!" ); }
+                
+                this.Value = Convert.ToInt32( parts[idxEqualsSign + 1] );
+                parts.RemoveAt( idxEqualsSign );
+            }
+        }
+        
+        private void TryGetNoUsedBits(ref ushort noUsedBits, ref List<string> parts) {
             if ( parts.Contains(":") ) {
                 /* this is a bitfield! */
                 int idxBitfield = parts.IndexOf(":");
                 if ( idxBitfield < 0 || idxBitfield >= ( parts.Count - 1 ) ) { throw new Exception( "Bitfield size missing!" ); }
                 
-                noUsedBits = Convert.ToInt32( parts[idxBitfield + 1] );
+                noUsedBits = Convert.ToUInt16( parts[idxBitfield + 1] );
                 parts.RemoveAt( idxBitfield );
             }
         }
@@ -188,38 +212,48 @@ namespace decoder {
             return false;
         }
         
-        private void ProcessEnumTypedef(ref List<dObject> ownTypes) {
+        private void ProcessEnumTypedef( ref ushort noUsedBits, ref List<dObject> ownTypes) {
             int enumerator = 0;
-                for ( int idxBody = 0; idxBody < this.Body.Count; idxBody++ ) {
-                    if ( this.Body[idxBody].Value == null ) {
-                        this.Body[idxBody].Value = enumerator;
-                    } else {
+            for ( int idxBody = 0; idxBody < this.Body[0].Count; idxBody++ ) {
+                if ( this.Body[0][idxBody].Value == null ) {
+                    this.Body[0][idxBody].Value = enumerator;
+                } else {
+                    try {
+                        enumerator = Convert.ToInt32( this.Body[0][idxBody].Value );
+                    } catch {
+                        /* This is not a number, so check for existing reference (enum) */
+                        if ( this.Body[0][idxBody].Value == null ) { break; }
+                        if ( this.Body[0][idxBody].Value.GetType() != typeof(string) ) { break; }
+                        /* Make sure we parse only string */
+                        bool foundReference = false;
+                        string strLastEnumVal = this.Body[0][idxBody].Value.ToString();
                         try {
-                            enumerator = Convert.ToInt32( this.Body[idxBody].Value );
-                        } catch {
-                            /* This is not a number, so check for existing reference (enum) */
-                            if ( this.Body[idxBody].Value == null ) { break; }
-                            if ( this.Body[idxBody].Value.GetType() != typeof(string) ) { break; }
-                            /* Make sure we parse only string */
-                            bool foundReference = false;
-                            string strLastEnumVal = this.Body[idxBody].Value.ToString();
-                            try {
-                                for ( int idxDObj = 0; ( idxDObj < ownTypes.Count ) && !foundReference; idxDObj++ ) {
-                                    if ( !ownTypes[idxDObj].IsEnum ) { continue; }
-                                    
-                                    for ( int idx = 0; idx < ownTypes[idxDObj].Body.Count; idx++ ) {
-                                        if ( ownTypes[idxDObj].Body[idx].Name.Equals( strLastEnumVal ) ) {
-                                            enumerator = Convert.ToInt32( ownTypes[idxDObj].Body[idx].Value );
-                                            foundReference = true;
-                                            break;
-                                        }
+                            for ( int idxDObj = 0; ( idxDObj < ownTypes.Count ) && !foundReference; idxDObj++ ) {
+                                if ( !ownTypes[idxDObj].IsEnum ) { continue; }
+                                
+                                for ( int idx = 0; idx < ownTypes[idxDObj].Body[0].Count; idx++ ) {
+                                    if ( ownTypes[idxDObj].Body[0][idx].Name.Equals( strLastEnumVal ) ) {
+                                        enumerator = Convert.ToInt32( ownTypes[idxDObj].Body[0][idx].Value );
+                                        foundReference = true;
+                                        break;
                                     }
                                 }
-                            } catch {}
-                        }
+                            }
+                        } catch {}
                     }
-                    enumerator++;
                 }
+                enumerator++;
+            }
+            if ( enumerator > 1 ) { enumerator--; }
+            
+            int noBitsRequired = 0;
+            while ( enumerator != 0 ) {
+                enumerator /= 2;
+                noBitsRequired++;
+            }
+            
+            noUsedBits = (ushort)noBitsRequired;
+            this.ElementSizeBits = (ushort)( 8 * ( (noUsedBits / 8) + 1) );
         }
         
         /// <summary>
@@ -229,11 +263,11 @@ namespace decoder {
         /// <param name="strAtoxParams"></param>
         public void ParseParamsOfAtox(string strAtoxParams, ref List<dObject> ownTypes) {
             bool    isPointer       = false;
-            int     noUsedBits      = -1;
+            ushort  noUsedBits      = 0;
             string  strNoElements   = "1";
             string  strComment      = "";
             string  strDObjRaw      = strAtoxParams;
-            this._elementSizeBits   = 32;
+            this.ElementSizeBits    = 32;
             
             strComment = GetCommentsFromStrAtox(ref strAtoxParams);
             PrepareInputString(ref strAtoxParams);
@@ -246,6 +280,8 @@ namespace decoder {
             
             if ( partsArr.Length == 0 ) { return; }
             
+            TryGetValueAfterEqualsSign(ref parts);
+            
             TryGetNoUsedBits(ref noUsedBits, ref parts);
             TryGetNoElements(ref strNoElements, ref parts);
             isPointer = GetIsPointerType(ref parts);
@@ -255,27 +291,57 @@ namespace decoder {
             TryProcessAsArray(strNoElements, ref ownTypes);
             this.IsPointer = isPointer;
             if ( this.IsPointer ) {
-                this._elementSizeBits = 32;
+                this.ElementSizeBits = 32;
                 this.NoBitsUsed = 32;
             }
             
-            if ( this.IsEnum && this.IsTypedef ) { ProcessEnumTypedef( ref ownTypes ); }
+            if ( this.IsTypedef && this.IsEnum ) { ProcessEnumTypedef( ref noUsedBits, ref ownTypes ); }
+            if ( this.IsTypedef && this.IsStruct ) {
+                int elSize = 0;
+                for ( int idx = 0; idx < this.Body[0].Count; idx++ ) {
+                    elSize += this.Body[0][idx].GetTotalSizeInBits();
+                }
+                this.ElementSizeBits = (ushort)elSize;
+            }
+            
+            if ( this.IsUnion && ( this.TypeName.Length == 0 ) ) { this.TypeName = "union"; }
             
             this.Comment = strComment;
             this.dObjRaw = strDObjRaw;
             
+            bool isAnonStruct   = false;
+            bool isAnonUnion    = false;
             if ( parts.Count == 0 ) {
                 this.Name = "?";
-                if ( this.IsUnion ) { this.Name += "UNION"; }
-                else if ( this.IsStruct ) { this.Name += "STRUCT"; }
+                if ( this.IsUnion ) { this.Name += "UNION"; isAnonUnion = true; }
+                else if ( this.IsStruct ) { this.Name += "STRUCT"; isAnonStruct = true; }
                 this.Name += "?";
-                return;
             }
-            if ( noUsedBits == -1 ) { noUsedBits = this._elementSizeBits; }
+            
+            if ( isAnonStruct ) {
+                int elSize = 0;
+                for ( int idx = 0; idx < this.Body[0].Count; idx++ ) {
+                    elSize += this.Body[0][idx].GetTotalSizeInBits();
+                }
+                this.ElementSizeBits = (ushort)elSize;
+            } else if ( isAnonUnion ) {
+                int elSize = 0;
+                int elSizeMax = 0;
+                for ( int idx = 0; idx < this.Body[0].Count; idx++ ) {
+                    elSize = this.Body[0][idx].GetTotalSizeInBits();
+                    if ( elSizeMax < elSize ) { elSizeMax = elSize; }
+                }
+                this.ElementSizeBits = (ushort)elSizeMax;
+            }
+            
+            
+            if ( noUsedBits == 0 ) { noUsedBits = this.ElementSizeBits; }
             this.NoBitsUsed = noUsedBits;
             
-            /* There should be at least one element that was not recognised - name */
-            this.Name = parts[0];
+            if ( parts.Count > 0 ) {
+                /* There should be at least one element that was not recognised - name */
+                this.Name = parts[0];
+            }
         }
         
         

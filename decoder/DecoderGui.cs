@@ -119,7 +119,7 @@ namespace decoder {
             node.Tag2 = bitOffset;
             node.Tag3 = decField.GetTotalSizeInBits();
             
-            if ( ( decField.NoElements > 1 ) && ( decField.Type == dObject.DecType.Char ) ) {
+            if ( ( decField.NoElements > 1 ) && ( decField.Type == DecType.Char ) ) {
                 TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
                 subItemValCharArr.ShowRelatedObject = true;
                 subItemValCharArr.GetRelatedObject = delegate() {
@@ -146,20 +146,21 @@ namespace decoder {
                 
                 nodeI.Tag2 = bitOffset;
                 
-                if ( ( decField.Type == dObject.DecType.Complex ) && !( decField.IsEnum ) ) {
+                if ( ( decField.Type == DecType.Complex ) && !( decField.IsEnum ) ) {
                     if ( decField.Body != null ) {
-                        /* FIXME fix array of body */
                         if ( decField.IsUnion ) {
-                            for ( int idx = 0; idx < decField.Body.Count; idx++ ) {
+                            for ( int idx = 0; idx < decField.Body[elId].Count; idx++ ) {
                                 bitOffset = bitOffsetUnion;
-                                BindDecoderSub( decField.Body[idx], ref bitOffset, nodeI );
+                                BindDecoderSub( decField.Body[elId][idx], ref bitOffset, nodeI );
                                 /* Update max bit offset */
                                 if ( bitOffsetUnionMax < bitOffset ) { bitOffsetUnionMax = bitOffset; }
                                 else { bitOffset = bitOffsetUnionMax; }
                             }
                         } else {
-                            for ( int idx = 0; idx < decField.Body.Count; idx++ ) {
-                                BindDecoderSub( decField.Body[idx], ref bitOffset, nodeI );
+                            if ( elId < decField.Body.Count ) {
+                                for ( int idx = 0; idx < decField.Body[elId].Count; idx++ ) {
+                                    BindDecoderSub( decField.Body[elId][idx], ref bitOffset, nodeI );
+                                }
                             }
                         }
                     }
@@ -167,13 +168,17 @@ namespace decoder {
                     TreeDetailsViewSubItem subItemVal = nodeI.AddSubitem( "[...]" );
                     subItemVal.ShowRelatedObject = true;
                     subItemVal.Tag = elId;
-                    subItemVal.GetRelatedObject = () => ((object[])decField.Value)[ (int)subItemVal.Tag ];
+                    subItemVal.GetRelatedObject = delegate() {
+                        if ( decField.Value == null ) { return "---"; }
+                        return ((object[])decField.Value)[ (int)subItemVal.Tag ];
+                    };
                     
                     TreeDetailsViewSubItem subItemRaw = nodeI.AddSubitem( "[...]" );
                     subItemRaw.ShowRelatedObject = true;
                     subItemRaw.Tag = elId;
                     subItemRaw.GetRelatedObject = delegate() {
                         try {
+                            if ( decField.Raw == null ) { return "---"; }
                             object obj = ((ulong[])decField.Raw)[ (int)subItemRaw.Tag ];
                             return "0x" + ((UInt64)obj).ToString("X" + numberOfNibbles);
                         } catch {}
@@ -211,7 +216,7 @@ namespace decoder {
         
         private static readonly Regex _rgxOneNibbles = new Regex(@" ([0-9a-fA-F]) ", RegexOptions.Compiled);
         string _strLastHash = "";
-        public void TryDecodeRawData() {
+        public void TryDecodeRawData(bool skipHash = false) {
             try {
                 if ( _decCurrent == null ) { 
                     /* Decoder not defined */
@@ -230,7 +235,7 @@ namespace decoder {
                 strData = strData.Trim( new char[] { ' ', '\r', '\n', '\t' } );
                 
                 string strHash = ComputeHash( strData );
-                if ( !_strLastHash.Equals( strHash ) ) {
+                if ( !_strLastHash.Equals( strHash ) || skipHash ) {
                     _strLastHash = strHash;
                     Byte[] dataBytes = StringToByteArray(strData);
                     cntrDecodes++;
@@ -238,7 +243,7 @@ namespace decoder {
                     _decCurrent.TryDecodeData( dataBytes );
                     structInfoView1.Refresh();
                 }
-            } catch { }
+            } catch (Exception ex) { }
         }
         
         static byte[] StringToByteArray(string hex) {
@@ -276,9 +281,9 @@ namespace decoder {
                 TreeNode nodePattern = new TreeNode();
                 nodePattern.Text = dec.Name.Length == 0 ? ( "enum pattern" + (++_patternCntr).ToString() ) : dec.Name;                
                 trVwPatterns.Nodes.Add( nodePattern );
-                for ( int idx = 0; idx < dec.Body.Count; idx++ ) {
+                for ( int idx = 0; idx < dec.Body[0].Count; idx++ ) {
                     TreeNode nodeEnumI = new TreeNode();
-                    nodeEnumI.Text = dec.Body[idx].Name + dec.Body[idx].Value;
+                    nodeEnumI.Text = dec.Body[0][idx].Name + " = " + dec.Body[0][idx].Value;
                     nodePattern.Nodes.Add( nodeEnumI );
                 }
             } else if ( dec.IsStruct || dec.IsUnion ) {
@@ -292,8 +297,8 @@ namespace decoder {
                 
                 BindDecoder( dec );
             } else {
-                for ( int idx = 0; idx < dec.Body.Count; idx++ ) {
-                    dObject dObj = dec.Body[idx];
+                for ( int idx = 0; idx < dec.Body[0].Count; idx++ ) {
+                    dObject dObj = dec.Body[0][idx];
                     AddDecoder( ref dObj );
                 }
             }
@@ -320,8 +325,10 @@ namespace decoder {
             } catch {}
 
             _decoders.Remove( _decCurrent );
-            _decCurrent = _decoders[0];
-            BindDecoder( _decCurrent );
+            if ( _decoders.Count > 0 ) {
+                _decCurrent = _decoders[0];
+                BindDecoder( _decCurrent );
+            }
         }
         
         void NewPatternToolStripMenuItemClick ( object sender, EventArgs e ) {
@@ -338,7 +345,7 @@ namespace decoder {
             dObject dec = _parser.ParseSource( newPattern );
             if ( dec != null ) {
                 AddDecoder( ref dec );
-                TryDecodeRawData();
+                TryDecodeRawData( skipHash: true );
             }
         }
         
@@ -394,7 +401,7 @@ namespace decoder {
             if ( node.Tag != null ) {
                 try {
                     this.BindDecoder( (dObject)(node.Tag) );
-                    TryDecodeRawData();
+                    TryDecodeRawData( skipHash: true );
                 } catch {}
             }
         }

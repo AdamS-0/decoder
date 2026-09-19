@@ -33,8 +33,8 @@ namespace decoder {
             /* 2. Get into srouce header file */
             try {
                 ParseBlock(strSrc, ref root, ref _ownTypes);
-                if ( root.Body.Count == 1 ) {
-                    root = root.Body[0];
+                if ( root.Body[0].Count == 1 ) {
+                    root = root.Body[0][0];
                 }
                 return root;
             } catch { }
@@ -147,7 +147,7 @@ namespace decoder {
                 if ( strAtoxParams.Length > 0 ) {
                     /* Thjere were no errors during proceeding, so add this ATOX to his parent's body */
                     atox.ParseParamsOfAtox( strAtoxParams, ref ownTypes );
-                    parent.Body.Add( atox );
+                    parent.Body[0].Add( atox );
                     if ( atox.IsTypedef ) {
                         dObject prevAtox = ownTypes.Find( o => o.Name == atox.Name );
                         if ( prevAtox == null ) {

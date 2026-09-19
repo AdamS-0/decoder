@@ -12,7 +12,83 @@ using System.Text.RegularExpressions;
 using CsBitmask;
 
 namespace decoder {
-    public partial class dObject  : ICloneable {        
+    public enum DecType {
+        Integer,
+        FloatingPoint,
+        Char,
+        Void,
+        Complex,
+    };
+    
+    public partial class dObject : dObjectSub {        
+        public dObject() { }
+        
+        public int GetTotalSizeInBits() {
+            return this.NoElements * this.NoBitsUsed;
+        }
+        
+        public ushort GetStructSizeBits() {
+            ushort totalBits = 0;
+            
+            foreach ( dObject decField in this.Body[0] ) {
+                totalBits += (ushort)decField.GetTotalSizeInBits();
+            }
+            
+            return totalBits;
+        }
+        
+        public string GetTypeAsString() {
+            string strType = GetElementTypeAsString();
+            
+            if ( this.NoElements > 1 ) {
+                strType += "[" + this.NoElements + "]";
+            }
+            
+            return strType;
+        }
+        
+        public string GetElementTypeAsString() {
+            string strType = "";
+            
+            if ( this.IsPointer ) {
+                strType += "*";
+            }
+            
+            if ( this.Type == DecType.Integer ) {
+                if ( !this.IsSignedU2 ) { strType += "u"; }
+            }
+            
+            switch ( this.Type ) {
+                case DecType.FloatingPoint:
+                    if ( this.ElementSizeBits == 64 )  { strType += "double"; }
+                    else                        { strType += "float"; }
+                    
+                    if ( ( this.ElementSizeBits == 64 ) && ( this.ElementSizeBits == 32 ) ) {
+                        strType += this.ElementSizeBits;
+                    }
+                    
+                    break;
+                case DecType.Char:
+                    strType += "char"; break;
+                case DecType.Void:
+                    strType += "void"; break;
+                default:
+                    if ( this.Type == DecType.Complex ) {
+                        strType += this.TypeName; break;
+                    }
+                    
+                    strType += "int";
+                    strType += this.ElementSizeBits;
+                    strType += " : " + this.NoBitsUsed;
+                    break;
+            }
+            
+            return strType;
+        }
+        
+    }
+    
+    public class dObjectSub : ICloneable {
         #region ICloneable implementation
         public object CloneToObject(dObject toObj) {
             toObj._mask     = this._mask;
@@ -24,8 +100,13 @@ namespace decoder {
             
             if ( this.Type == DecType.Complex ) {
                 toObj.Body.Clear();
-                for( int idx = 0; idx < this.Body.Count; idx++ ) {
-                    toObj.Body.Add( (dObject)this.Body[idx].Clone() );
+                toObj.Body = new List<List<dObject>>();
+                for( int idxElement = 0; idxElement < this.Body.Count; idxElement++ ) {
+                    List<dObject> elemBodyList = new List<dObject>();
+                    toObj.Body.Add( elemBodyList );
+                    for( int idx = 0; idx < this.Body[idxElement].Count; idx++ ) {
+                        elemBodyList.Add( (dObject)this.Body[idxElement][idx].Clone() );
+                    }
                 }
             }
             
@@ -39,28 +120,22 @@ namespace decoder {
         }
         #endregion
         
-        public enum DecType {
-            Integer,
-            FloatingPoint,
-            Char,
-            Void,
-            Complex,
-        };
-        
         public string           dObjRaw = "";
         public string           Comment = "";
-        public string           Name = "";
-        public string           TypeName = "";
+        public string           Name    = "";
+        public string           TypeName= "";
         
-        public object           Value;
-        public UInt64[]         Raw;
-        public List<dObject>    Body = new List<dObject>();
+        public object           Value; /* Used only for basic types */
+        public UInt64[]         Raw; /* Used only for basic types */
+        
+        /* Used only for complex data types */
+        public List<List<dObject>>  Body = new List<List<dObject>>();
         
         /// <summary>
         /// Mask with common parameters, to minimize size of a instance
         /// Bits:
         ///  b0 - b15   => NoElements, ushort, [0 - 65535]
-        /// b16 - b31   => _sizeBits, ushort, [0 - 65535]
+        /// b16 - b31   => ElementSizeBits, ushort, [0 - 65535]
         /// b32 - b47   => NoBitsUsed, ushort, [0 - 65535]
         /// b48 - b57   => Reserved
         /// B58         => IsTypedef, bool
@@ -71,48 +146,27 @@ namespace decoder {
         /// b63         => IsSignedU2, bool
         /// </summary>
         protected UInt64 _mask = 0;
-        
-        private ushort  _elementSizeBits {
-            get { return (ushort)Bitmask.Get(_mask, 16, 16); }
-            set { Bitmask.Set( ref _mask, 16, 16, value ); }
-        }
-        
+
         /// <summary>
-        /// Number of bits per one element
+        /// Number of elements
         /// </summary>
-        public ushort   ElementSizeBits {
-            get {
-                if ( this.Type == DecType.Complex ) {
-                    ushort compelxElSize = 0;
-                    if ( this.IsUnion ) {
-                        ushort elSizeMax = 0;
-                        for ( int idx = 0; idx < this.Body.Count; idx++ ) {
-                            compelxElSize = (ushort)(this.Body[idx].GetTotalSizeInBits());
-                            if ( elSizeMax < compelxElSize ) { elSizeMax = compelxElSize; }
-                        }
-                        compelxElSize = elSizeMax;
-                    } else if ( this.IsEnum ) {
-                        return (ushort)NoBitsUsed;
-                    } else {
-                        for ( int idx = 0; idx < this.Body.Count; idx++ ) {
-                            compelxElSize += (ushort)(this.Body[idx].GetTotalSizeInBits());
-                        }
-                    }
-                    return compelxElSize;
-                }
-                return (ushort)NoBitsUsed;// _elementSizeBits;
-            }
-        }
-        
         public ushort   NoElements {
             get { return (ushort)Bitmask.Get(_mask, 0, 16); }
             set { Bitmask.Set( ref _mask, 0, 16, value ); }
         }
         
         /// <summary>
+        /// Number of bits per one element
+        /// </summary>
+        public ushort   ElementSizeBits {
+            get { return (ushort)Bitmask.Get(_mask, 16, 16); }
+            set { Bitmask.Set( ref _mask, 16, 16, value ); }
+        }
+        
+        /// <summary>
         /// Number of bits used by this field, e.g. 4 from uint16
         /// </summary>
-        public int      NoBitsUsed {
+        public ushort   NoBitsUsed {
             get { return (ushort)Bitmask.Get(_mask, 32, 16); }
             set { Bitmask.Set( ref _mask, 32, 16, value ); }
         }
@@ -149,69 +203,9 @@ namespace decoder {
             set { Bitmask.SetBit( ref _mask, 63, value ); }
         }
         
-        public dObject() { }
-        
-        public int GetTotalSizeInBits() {
-            return this.NoElements * this.ElementSizeBits;
-        }
-        
-        public ushort GetStructSizeBits() {
-            ushort totalBits = 0;
-            
-            foreach ( dObject decField in this.Body ) {
-                totalBits += (ushort)decField.GetTotalSizeInBits();
-            }
-            
-            return totalBits;
-        }
-        
-        public string GetTypeAsString() {
-            string strType = GetElementTypeAsString();
-            
-            if ( this.NoElements > 1 ) {
-                strType += "[" + this.NoElements + "]";
-            }
-            
-            return strType;
-        }
-        
-        public string GetElementTypeAsString() {
-            string strType = "";
-            
-            if ( this.IsPointer ) {
-                strType += "*";
-            }
-            
-            if ( this.Type == DecType.Integer ) {
-                if ( !this.IsSignedU2 ) { strType += "u"; }
-            }
-            
-            switch ( this.Type ) {
-                case DecType.FloatingPoint:
-                    if ( this._elementSizeBits == 64 )  { strType += "double"; }
-                    else                        { strType += "float"; }
-                    
-                    if ( ( this._elementSizeBits == 64 ) && ( this._elementSizeBits == 32 ) ) {
-                        strType += this._elementSizeBits;
-                    }
-                    
-                    break;
-                case DecType.Char:
-                    strType += "char"; break;
-                case DecType.Void:
-                    strType += "void"; break;
-                default:
-                    if ( this.Type == DecType.Complex ) {
-                        strType += this.TypeName; break;
-                    }
-                    
-                    strType += "int";
-                    strType += this._elementSizeBits;
-                    strType += " : " + this.NoBitsUsed;
-                    break;
-            }
-            
-            return strType;
+        public dObjectSub() {
+            List<dObject> newList = new List<dObject>();
+            Body.Add( newList );
         }
         
     }
