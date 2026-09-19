@@ -154,6 +154,7 @@ namespace decoder {
             string strData = GetSelectedText();
             _leftMenu.Close();
             DecoderGui gui = GetCurrGui();
+            strData = strData.Trim(new char[] { ' ', '\r', '\n', '\t' });
             gui.SetRawDataAndTryParse( strData );
             gui.BringToFront();
         }

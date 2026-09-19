@@ -107,7 +107,7 @@ namespace decoder
             treeDetailsViewColumnItem1.ForeColor = System.Drawing.Color.Black;
             treeDetailsViewColumnItem1.SelectedBackColor = System.Drawing.Color.Gainsboro;
             treeDetailsViewColumnItem1.Text = "Name";
-            treeDetailsViewColumnItem1.Width = 95;
+            treeDetailsViewColumnItem1.Width = 125;
             treeDetailsViewColumnItem2.Font = new System.Drawing.Font("Arial", 10F);
             treeDetailsViewColumnItem2.ForeColor = System.Drawing.Color.Black;
             treeDetailsViewColumnItem2.SelectedBackColor = System.Drawing.Color.Gainsboro;
@@ -122,7 +122,7 @@ namespace decoder
             treeDetailsViewColumnItem4.ForeColor = System.Drawing.Color.Black;
             treeDetailsViewColumnItem4.SelectedBackColor = System.Drawing.Color.Gainsboro;
             treeDetailsViewColumnItem4.Text = "Value";
-            treeDetailsViewColumnItem4.Width = 75;
+            treeDetailsViewColumnItem4.Width = 95;
             treeDetailsViewColumnItem5.Font = new System.Drawing.Font("Arial", 10F);
             treeDetailsViewColumnItem5.ForeColor = System.Drawing.Color.Black;
             treeDetailsViewColumnItem5.SelectedBackColor = System.Drawing.Color.Gainsboro;
@@ -138,7 +138,7 @@ namespace decoder
             this.structInfoView1.FlatStyle = VisBox.VisElement.VisFlatStyle.Collapsed;
             this.structInfoView1.Location = new System.Drawing.Point(138, 106);
             this.structInfoView1.Name = "structInfoView1";
-            this.structInfoView1.Size = new System.Drawing.Size(403, 245);
+            this.structInfoView1.Size = new System.Drawing.Size(453, 245);
             this.structInfoView1.TabIndex = 0;
             this.structInfoView1.Text = "structInfoView1";
             this.structInfoView1.TreeLine = null;
@@ -186,7 +186,7 @@ namespace decoder
             this.pMain.Location = new System.Drawing.Point(0, 25);
             this.pMain.Name = "pMain";
             this.pMain.Padding = new System.Windows.Forms.Padding(3);
-            this.pMain.Size = new System.Drawing.Size(544, 354);
+            this.pMain.Size = new System.Drawing.Size(594, 354);
             this.pMain.TabIndex = 1;
             // 
             // splitter2
@@ -194,7 +194,7 @@ namespace decoder
             this.splitter2.Dock = System.Windows.Forms.DockStyle.Top;
             this.splitter2.Location = new System.Drawing.Point(138, 103);
             this.splitter2.Name = "splitter2";
-            this.splitter2.Size = new System.Drawing.Size(403, 3);
+            this.splitter2.Size = new System.Drawing.Size(453, 3);
             this.splitter2.TabIndex = 4;
             this.splitter2.TabStop = false;
             // 
@@ -204,7 +204,7 @@ namespace decoder
             this.grpBxRawData.Dock = System.Windows.Forms.DockStyle.Top;
             this.grpBxRawData.Location = new System.Drawing.Point(138, 3);
             this.grpBxRawData.Name = "grpBxRawData";
-            this.grpBxRawData.Size = new System.Drawing.Size(403, 100);
+            this.grpBxRawData.Size = new System.Drawing.Size(453, 100);
             this.grpBxRawData.TabIndex = 2;
             this.grpBxRawData.TabStop = false;
             this.grpBxRawData.Text = "Raw data";
@@ -215,7 +215,7 @@ namespace decoder
             this.rtbRawData.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.rtbRawData.Location = new System.Drawing.Point(3, 16);
             this.rtbRawData.Name = "rtbRawData";
-            this.rtbRawData.Size = new System.Drawing.Size(397, 81);
+            this.rtbRawData.Size = new System.Drawing.Size(447, 81);
             this.rtbRawData.TabIndex = 0;
             this.rtbRawData.Text = "";
             this.rtbRawData.TextChanged += new System.EventHandler(this.RtbRawDataTextChanged);
@@ -256,7 +256,7 @@ namespace decoder
             this.tlStrpMenuData});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(544, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(594, 25);
             this.toolStrip1.TabIndex = 2;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -280,6 +280,7 @@ namespace decoder
             // 
             // tlStrpBtnPatternRebuild
             // 
+            this.tlStrpBtnPatternRebuild.Enabled = false;
             this.tlStrpBtnPatternRebuild.Name = "tlStrpBtnPatternRebuild";
             this.tlStrpBtnPatternRebuild.Size = new System.Drawing.Size(199, 22);
             this.tlStrpBtnPatternRebuild.Text = "Rebuild current pattern";
@@ -313,6 +314,7 @@ namespace decoder
             // 
             this.littleEndianToolStripMenuItem.Checked = true;
             this.littleEndianToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.littleEndianToolStripMenuItem.Enabled = false;
             this.littleEndianToolStripMenuItem.Name = "littleEndianToolStripMenuItem";
             this.littleEndianToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.littleEndianToolStripMenuItem.Text = "LittleEndian";
@@ -334,7 +336,7 @@ namespace decoder
             this.tlStrpLblStatus});
             this.statusStrip1.Location = new System.Drawing.Point(0, 379);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(544, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(594, 22);
             this.statusStrip1.TabIndex = 3;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -349,7 +351,7 @@ namespace decoder
             // 
             this.toolStripStatusLabel1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(328, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(378, 17);
             this.toolStripStatusLabel1.Spring = true;
             // 
             // tlStrpLblStatus
@@ -363,7 +365,7 @@ namespace decoder
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 401);
+            this.ClientSize = new System.Drawing.Size(594, 401);
             this.Controls.Add(this.pMain);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
