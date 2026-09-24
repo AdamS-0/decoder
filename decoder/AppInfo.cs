@@ -15,7 +15,7 @@ namespace decoder {
     public class AppInfo {
         
         public const string Name = "decoder";
-        public const string Version = "0.1.0-" + vn.BUILD_NUM + "_" +
+        public const string Version = "0.2.0-" + vn.BUILD_NUM + "_" +
             vn.BUILD_YEAR + vn.BUILD_MON + vn.BUILD_DAY + "." +
             vn.BUILD_HOUR + vn.BUILD_MIN;
         public const string Author = "AdamS-0 2026";

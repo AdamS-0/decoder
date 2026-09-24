@@ -26,6 +26,9 @@ namespace decoder {
             strAtoxParams = _rgxSpaceCutter.Replace( strAtoxParams, " " );
             strAtoxParams = strAtoxParams.Replace( ";", "" );
             strAtoxParams = strAtoxParams.Replace( ",", "" );
+            
+            /* Add extra spaces before and after ':' */
+            strAtoxParams = strAtoxParams.Replace( ":", " : " );
         }
         
         private static string GetCommentsFromStrAtox(ref string strAtoxParams) {
