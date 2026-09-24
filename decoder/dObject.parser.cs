@@ -16,6 +16,18 @@ namespace decoder {
     partial class dObject {
         
         private static void PrepareInputString(ref string strAtoxParams) {
+            
+            /* Cut off attributes like "__attribute__((packed))" */
+            const string strAttr = "__attribute__";
+            int idxAttr = strAtoxParams.IndexOf(strAttr);
+            if ( idxAttr >= 0 ) {
+                int idxEOA = strAtoxParams.FindParityIndex( '(', ')', idxAttr );
+                if ( ( idxEOA > 0 ) && ( idxEOA < strAtoxParams.Length ) ) {
+                    strAtoxParams = strAtoxParams.Substring( 0, idxAttr ) + 
+                        strAtoxParams.Substring( idxEOA + 1 );
+                }
+            }
+            
             /* Cut off ';' and multiple spaces */
             strAtoxParams = strAtoxParams.Replace( "\r", " " );
             strAtoxParams = strAtoxParams.Replace( "\n", " " );
@@ -255,8 +267,11 @@ namespace decoder {
                 noBitsRequired++;
             }
             
-            noUsedBits = (ushort)noBitsRequired;
-            this.ElementSizeBits = (ushort)( 8 * ( (noUsedBits / 8) + 1) );
+            if ( noUsedBits == 0 ) {
+                noUsedBits = 32;
+//                noUsedBits = (ushort)noBitsRequired;
+//                this.ElementSizeBits = (ushort)( 8 * ( (noUsedBits / 8) + 1) );
+            }
         }
         
         /// <summary>
@@ -270,7 +285,7 @@ namespace decoder {
             string  strNoElements   = "1";
             string  strComment      = "";
             string  strDObjRaw      = strAtoxParams;
-            this.ElementSizeBits    = 32;
+            this.ElementSizeBits    = 0;
             
             strComment = GetCommentsFromStrAtox(ref strAtoxParams);
             PrepareInputString(ref strAtoxParams);
@@ -281,7 +296,7 @@ namespace decoder {
             List<string> parts = new List<string>(partsArr);
             RemoveEmptyParts( ref parts );
             
-            if ( partsArr.Length == 0 ) { return; }
+            if ( parts.Count == 0 ) { return; }
             
             TryGetValueAfterEqualsSign(ref parts);
             
@@ -291,6 +306,22 @@ namespace decoder {
             
             ProcessBasicKeyWords( ref parts );
             ProcessComplexEntities( ref parts, ref ownTypes );
+            
+            if ( this.IsStruct ) {
+                int elSize = 0;
+                for ( int idx = 0; idx < this.Body[0].Count; idx++ ) {
+                    elSize += this.Body[0][idx].NoElements * this.Body[0][idx].ElementSizeBits;
+                }
+                this.ElementSizeBits = (ushort)elSize;
+            } else if ( this.IsUnion ) {
+                int elSize = 0, elSizeMax = 0;
+                for ( int idx = 0; idx < this.Body[0].Count; idx++ ) {
+                    elSize = this.Body[0][idx].NoElements * this.Body[0][idx].ElementSizeBits;
+                    elSizeMax = Math.Max( elSizeMax, elSize );
+                }
+                this.ElementSizeBits = (ushort)elSizeMax;
+            }
+            
             TryProcessAsArray(strNoElements, ref ownTypes);
             this.IsPointer = isPointer;
             if ( this.IsPointer ) {
@@ -339,6 +370,7 @@ namespace decoder {
             
             
             if ( noUsedBits == 0 ) { noUsedBits = this.ElementSizeBits; }
+            else if ( this.ElementSizeBits == 0 ) { this.ElementSizeBits = noUsedBits; }
             this.NoBitsUsed = noUsedBits;
             
             if ( parts.Count > 0 ) {

@@ -71,10 +71,573 @@ typedef struct {
 
 
 
-w decoder.Decoder.TryDecodeInternal(Byte[]& arrIn, Int32& idByte, Int32& idBit) w e:\Documents\_SharpDevelop_Projects\decoder\decoder\Decoder.cs:wiersz 136
-w decoder.Decoder.TryDecode(Byte[] arrIn) w e:\Documents\_SharpDevelop_Projects\decoder\decoder\Decoder.cs:wiersz 99
-w decoder.DecoderGui.TryParseRawData() w e:\Documents\_SharpDevelop_Projects\decoder\decoder\DecoderGui.cs:wiersz 105
 
-w decoder.Decoder.TryDecodeInternal(Byte[]& arrIn, Int32& idByte, Int32& idBit) w e:\Documents\_SharpDevelop_Projects\decoder\decoder\Decoder.cs:wiersz 183
-w decoder.Decoder.TryDecode(Byte[] arrIn) w e:\Documents\_SharpDevelop_Projects\decoder\decoder\Decoder.cs:wiersz 140
-w decoder.DecoderGui.TryParseRawData() w e:\Documents\_SharpDevelop_Projects\decoder\decoder\DecoderGui.cs:wiersz 105
+
+
+#ifndef DEVICE_CONFIG_H
+#define DEVICE_CONFIG_H
+
+#include <stdint.h>
+
+/* ============================================================
+ * Stałe kompilacyjne
+ * ============================================================ */
+
+/* Rozmiary tablic */
+#define DEVICE_NAME_LEN       32
+#define DEVICE_ID_LEN         8
+#define MAX_CHANNELS          4
+#define MAX_SENSORS           8
+#define HISTORY_SIZE          10
+
+/* Wartości konfiguracyjne */
+#define DEFAULT_TIMEOUT_MS   1000
+#define MAX_TEMPERATURE      125.0f
+#define MIN_TEMPERATURE      (-40.0f)
+
+/* Przykładowe maski bitowe */
+#define FLAG_ENABLED         (1u << 0)
+#define FLAG_ERROR            (1u << 1)
+#define FLAG_WARNING          (1u << 2)
+
+
+/* ============================================================
+ * ENUM
+ * ============================================================ */
+
+/*
+ * Rodzaj urządzenia.
+ */
+typedef enum
+{
+    DEVICE_UNKNOWN = 0,
+    DEVICE_SENSOR,
+    DEVICE_CONTROLLER,
+    DEVICE_GATEWAY
+} DeviceType;
+
+
+/*
+ * Stan urządzenia.
+ */
+typedef enum
+{
+    STATE_OFF = 0,
+    STATE_STARTING,
+    STATE_RUNNING,
+    STATE_ERROR,
+    STATE_MAINTENANCE
+} DeviceState;
+
+
+/*
+ * Rodzaj sensora.
+ */
+typedef enum
+{
+    SENSOR_NONE = 0,
+    SENSOR_TEMPERATURE,
+    SENSOR_PRESSURE,
+    SENSOR_HUMIDITY
+} SensorType;
+
+
+/* ============================================================
+ * PROSTE STRUKTURY
+ * ============================================================ */
+
+/*
+ * Prosta pozycja 2D.
+ */
+typedef struct
+{
+    int x;
+    int y;
+} Point;
+
+
+/*
+ * Współrzędne 3D.
+ */
+typedef struct
+{
+    float x;
+    float y;
+    float z;
+} Vector3;
+
+
+/*
+ * Informacje o wersji.
+ */
+typedef struct
+{
+    uint8_t  major;
+    uint8_t  minor;
+    uint16_t build;
+} Version;
+
+
+/*
+ * Adres urządzenia.
+ *
+ * uint8_t device_id[DEVICE_ID_LEN] wykorzystuje
+ * #define jako rozmiar tablicy.
+ */
+typedef struct
+{
+    uint8_t device_id[DEVICE_ID_LEN];
+    char    name[DEVICE_NAME_LEN];
+} DeviceInfo;
+
+
+/* ============================================================
+ * ZAGNIEŻDŻONE STRUKTURY
+ * ============================================================ */
+
+/*
+ * Współrzędne oraz orientacja urządzenia.
+ */
+typedef struct
+{
+    Point   position;
+    Vector3 rotation;
+} Transform;
+
+
+/*
+ * Informacje o urządzeniu.
+ *
+ * Wewnątrz struktury znajdują się inne struktury.
+ */
+typedef struct
+{
+    DeviceInfo info;
+    Version    firmware;
+    Transform  transform;
+
+    DeviceType type;
+    DeviceState state;
+} Device;
+
+
+/*
+ * Konfiguracja pojedynczego kanału.
+ */
+typedef struct
+{
+    uint16_t channel_id;
+
+    float min_value;
+    float max_value;
+
+    uint8_t enabled;
+} ChannelConfig;
+
+
+/*
+ * Konfiguracja wszystkich kanałów.
+ */
+typedef struct
+{
+    uint8_t channel_count;
+
+    ChannelConfig channels[MAX_CHANNELS];
+
+} ChannelsConfig;
+
+
+/* ============================================================
+ * UNION
+ * ============================================================ */
+
+/*
+ * Wartość sensora może być przechowywana jako różny typ.
+ *
+ * UWAGA:
+ * Wszystkie pola union współdzielą ten sam obszar pamięci.
+ */
+typedef union
+{
+    int32_t  integer;
+    uint32_t unsigned_integer;
+
+    float    floating;
+
+    char     character;
+
+} SensorValue;
+
+
+/*
+ * Union zawierający większe dane.
+ */
+typedef union
+{
+    uint8_t  bytes[4];
+    uint16_t words[2];
+    uint32_t value;
+    float    floating;
+
+} RawValue;
+
+
+/* ============================================================
+ * STRUKTURA Z UNIONEM
+ * ============================================================ */
+
+/*
+ * Dane pojedynczego pomiaru.
+ */
+typedef struct
+{
+    uint32_t timestamp;
+
+    SensorType type;
+
+    SensorValue value;
+
+} SensorReading;
+
+
+/*
+ * Sensor.
+ */
+typedef struct
+{
+    uint16_t id;
+
+    char name[DEVICE_NAME_LEN];
+
+    SensorType type;
+
+    SensorReading last_reading;
+
+    float history[HISTORY_SIZE];
+
+} Sensor;
+
+
+/* ============================================================
+ * ANONIMOWA UNION WEWNĄTRZ STRUKTURY
+ * ============================================================ */
+
+/*
+ * Dzięki anonimowej union możemy napisać:
+ *
+ *     message.integer_value
+ *
+ * zamiast:
+ *
+ *     message.data.integer_value
+ *
+ * Wszystkie pola union zajmują ten sam obszar pamięci.
+ */
+typedef struct
+{
+    uint8_t type;
+
+    union
+    {
+        int32_t integer_value;
+        float   float_value;
+
+        char text[DEVICE_NAME_LEN];
+
+    };
+
+} Message;
+
+
+/* ============================================================
+ * ANONIMOWA STRUCT WEWNĄTRZ STRUCT
+ * ============================================================ */
+
+/*
+ * Anonimowa struktura pozwala odwoływać się bezpośrednio
+ * do jej pól.
+ *
+ * Możemy więc zrobić:
+ *
+ *     config.network.ip
+ *     config.network.port
+ *
+ * zamiast:
+ *
+ *     config.network.address.ip
+ */
+typedef struct
+{
+    uint8_t enabled;
+
+    struct
+    {
+        uint32_t ip;
+        uint16_t port;
+    } network;
+
+    /*
+     * Anonimowa struktura.
+     *
+     * Pola timeout_ms i retry_count należą bezpośrednio
+     * do Config.
+     */
+    struct
+    {
+        uint32_t timeout_ms;
+        uint8_t  retry_count;
+    };
+
+} Config;
+
+
+/* ============================================================
+ * ZAGNIEŻDŻONE ANONIMOWE STRUCT + UNION
+ * ============================================================ */
+
+/*
+ * Bardziej rozbudowany przykład.
+ */
+typedef struct
+{
+    uint16_t id;
+
+    /*
+     * Anonimowa struktura.
+     */
+    struct
+    {
+        float x;
+        float y;
+        float z;
+    } position;
+
+
+    /*
+     * Anonimowa union.
+     */
+    union
+    {
+        /*
+         * Wariant liczbowy.
+         */
+        struct
+        {
+            int32_t integer;
+            float   decimal;
+        } number;
+
+
+        /*
+         * Wariant tekstowy.
+         */
+        struct
+        {
+            char text[DEVICE_NAME_LEN];
+        } string;
+
+
+        /*
+         * Surowe bajty.
+         */
+        uint8_t raw[DEVICE_ID_LEN];
+
+    };
+
+} DataObject;
+
+
+/* ============================================================
+ * BARDZIEJ ZŁOŻONA STRUKTURA
+ * ============================================================ */
+
+/*
+ * Pełna konfiguracja urządzenia.
+ *
+ * Zawiera:
+ *   - enum
+ *   - struktury
+ *   - tablice
+ *   - union
+ *   - zagnieżdżone struktury
+ *   - typy z <stdint.h>
+ *   - wartości z #define
+ */
+typedef struct
+{
+    /* Podstawowe informacje */
+    DeviceInfo info;
+
+    /* Typ i stan */
+    DeviceType type;
+    DeviceState state;
+
+    /* Wersja firmware */
+    Version firmware;
+
+
+    /* Konfiguracja kanałów */
+    ChannelsConfig channels;
+
+
+    /* Tablica sensorów */
+    uint8_t sensor_count;
+
+    Sensor sensors[MAX_SENSORS];
+
+
+    /* Parametry pracy */
+    struct
+    {
+        float temperature;
+        float voltage;
+
+        uint16_t timeout_ms;
+
+        int8_t calibration_offset;
+
+    } parameters;
+
+
+    /*
+     * Dane diagnostyczne.
+     */
+    union
+    {
+        uint32_t error_code;
+
+        struct
+        {
+            uint8_t communication_error;
+            uint8_t sensor_error;
+            uint8_t power_error;
+            uint8_t reserved;
+        } errors;
+
+    } diagnostics;
+
+
+} DeviceConfig;
+
+
+/* ============================================================
+ * STRUKTURA Z TABLICAMI RÓŻNYCH TYPÓW
+ * ============================================================ */
+
+typedef struct
+{
+    int values[HISTORY_SIZE];
+
+    char name[DEVICE_NAME_LEN];
+
+    float measurements[HISTORY_SIZE];
+
+    uint16_t ids[MAX_SENSORS];
+
+    int8_t offsets[10];
+
+} DataBuffer;
+
+
+/* ============================================================
+ * BIT-FIELD
+ * ============================================================ */
+
+/*
+ * Pola bitowe.
+ *
+ * Rozmiary:
+ *
+ * enabled  -> 1 bit
+ * error    -> 1 bit
+ * warning  -> 1 bit
+ * mode     -> 3 bity
+ * reserved -> 2 bity
+ *
+ * Łącznie: 8 bitów.
+ */
+typedef struct
+{
+    uint8_t enabled  : 1;
+    uint8_t error    : 1;
+    uint8_t warning  : 1;
+    uint8_t mode     : 3;
+    uint8_t reserved : 2;
+
+} StatusFlags;
+
+
+/* ============================================================
+ * STRUKTURA Z FLAGS
+ * ============================================================ */
+
+typedef struct
+{
+    uint16_t id;
+
+    StatusFlags flags;
+
+    uint32_t timestamp;
+
+    float value;
+
+} Measurement;
+
+
+/* ============================================================
+ * PRZYKŁADOWE STAŁE / MAKRA ZWIĄZANE Z TYPAMI
+ * ============================================================ */
+
+#define DEFAULT_DEVICE_TYPE     DEVICE_SENSOR
+#define DEFAULT_DEVICE_STATE    STATE_OFF
+
+#define DEFAULT_SENSOR_COUNT    2
+
+#define DEFAULT_TIMEOUT         DEFAULT_TIMEOUT_MS
+
+
+/* ============================================================
+ * PRZYKŁADOWA INICJALIZACJA
+ *
+ * Można umieścić ją w .c, ale tutaj pokazujemy składnię.
+ * ============================================================ */
+
+/*
+ * Przykład:
+ *
+ * DeviceConfig config =
+ * {
+ *     .info =
+ *     {
+ *         .device_id = { 1, 2, 3, 4, 5, 6, 7, 8 },
+ *         .name = "Sensor-01"
+ *     },
+ *
+ *     .type  = DEFAULT_DEVICE_TYPE,
+ *     .state = DEFAULT_DEVICE_STATE,
+ *
+ *     .firmware =
+ *     {
+ *         .major = 1,
+ *         .minor = 2,
+ *         .build = 42
+ *     },
+ *
+ *     .parameters =
+ *     {
+ *         .temperature = 25.0f,
+ *         .voltage = 3.3f,
+ *         .timeout_ms = DEFAULT_TIMEOUT,
+ *         .calibration_offset = 0
+ *     },
+ *
+ *     .sensor_count = DEFAULT_SENSOR_COUNT
+ * };
+ */
+
+
+/* ============================================================
+ * KONIEC
+ * ============================================================ */
+
+#endif /* DEVICE_CONFIG_H */

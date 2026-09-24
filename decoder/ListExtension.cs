@@ -24,4 +24,30 @@ namespace decoder {
             return false;
         }
     }
+    
+    
+    public static class StringExtensions {
+        /// <summary>
+        /// Finds index of parity correct end of scope
+        /// </summary>
+        /// <param name="strIn"></param>
+        /// <param name="charSOS"></param>
+        /// <param name="charEOS"></param>
+        /// <param name="idxStart"></param>
+        /// <returns>Index of parity scope EOS, or -1 when not found</returns>
+        public static int FindParityIndex(this string strIn, char charSOS, char charEOS, int idxStart = 0) {
+            int cntrParity = 0;
+            for ( int idx = idxStart; idx < strIn.Length; idx++ ) {
+                if ( strIn[idx] == charSOS ) { cntrParity++; }
+                else if ( strIn[idx] == charEOS ) {
+                    cntrParity--;
+                    if ( cntrParity == 0 ) {
+                        return idx;
+                    }
+                }
+            }
+            return -1;
+        }
+        
+    }
 }

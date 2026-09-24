@@ -44,6 +44,12 @@ namespace decoder {
                 strType += "[" + this.NoElements + "]";
             }
             
+            if ( ( strType.Length > 0 ) && !strType.EndsWith(" ") ) { strType += " "; }
+            
+            if      ( this.IsEnum    ) { strType += "{enum}"; }
+            else if ( this.IsStruct  ) { strType += "{struct}"; }
+            else if ( this.IsUnion   ) { strType += "{union}"; }
+            
             return strType;
         }
         
@@ -207,6 +213,8 @@ namespace decoder {
             List<dObject> newList = new List<dObject>();
             Body.Add( newList );
         }
+        
+        public string ToString() { return "dObject: [" + this.Name + "]"; }
         
     }
     

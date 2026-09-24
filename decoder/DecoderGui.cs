@@ -105,7 +105,7 @@ namespace decoder {
             rtbRawData.ResumeDrawing();
         }
 
-        private void BindDecoderSub(dObject decField, ref int bitOffset, TreeDetailsViewItem parentNode = null ) {
+        private void BindDecoderSub(dObject decField, ref int bitOffset, TreeDetailsViewItem parentNode = null, int embdLvl = 0 ) {
             cntrBinds++;
             UpdateStats();
             
@@ -118,6 +118,9 @@ namespace decoder {
             node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
             node.Tag2 = bitOffset;
             node.Tag3 = decField.GetTotalSizeInBits();
+            
+            if ( decField.NoElements > 10 ) { node.Collapsed = true; }
+            if ( embdLvl > 1 ) { node.Collapsed = true; }
             
             if ( ( decField.NoElements > 1 ) && ( decField.Type == DecType.Char ) ) {
                 TreeDetailsViewSubItem subItemValCharArr = node.AddSubitem( "[...]" );
@@ -137,7 +140,7 @@ namespace decoder {
             int numberOfNibbles = ( ( decField.NoBitsUsed - 1) / 4 ) + 1;
             for( int elId = 0; elId < decField.NoElements; elId++ ) {
                 TreeDetailsViewItem nodeI = node;
-                if ( decField.NoElements > 1 ) {                        
+                if ( decField.NoElements > 1 ) {
                     nodeI = node.AddSubNode( decField.Name + "[" + elId + "]" );
                     nodeI.AddSubitem( decField.GetElementTypeAsString() );
                     nodeI.AddSubitem( decField.ElementSizeBits.ToString() );
@@ -151,7 +154,7 @@ namespace decoder {
                         if ( decField.IsUnion ) {
                             for ( int idx = 0; idx < decField.Body[elId].Count; idx++ ) {
                                 bitOffset = bitOffsetUnion;
-                                BindDecoderSub( decField.Body[elId][idx], ref bitOffset, nodeI );
+                                BindDecoderSub( decField.Body[elId][idx], ref bitOffset, nodeI, embdLvl + 1 );
                                 /* Update max bit offset */
                                 if ( bitOffsetUnionMax < bitOffset ) { bitOffsetUnionMax = bitOffset; }
                                 else { bitOffset = bitOffsetUnionMax; }
@@ -159,7 +162,7 @@ namespace decoder {
                         } else {
                             if ( elId < decField.Body.Count ) {
                                 for ( int idx = 0; idx < decField.Body[elId].Count; idx++ ) {
-                                    BindDecoderSub( decField.Body[elId][idx], ref bitOffset, nodeI );
+                                    BindDecoderSub( decField.Body[elId][idx], ref bitOffset, nodeI, embdLvl + 1 );
                                 }
                             }
                         }
@@ -198,6 +201,7 @@ namespace decoder {
             structInfoView1.Nodes.Clear();
             int bitOffset = 0;
             BindDecoderSub( dec, ref bitOffset );
+            structInfoView1.NumberOfVisibleNodesChanged();
             structInfoView1.Visible = true;
             structInfoView1.ResumeDrawing();
             structInfoView1.Refresh();

@@ -32,12 +32,23 @@ namespace decoder {
             dObject root = new dObject();
             /* 2. Get into srouce header file */
             try {
+                int idxCommentStart = 0;
+                while ( ( idxCommentStart = strSrc.IndexOf("/*", idxCommentStart) ) >= 0 ) {
+                    int idxCommentEnd = strSrc.IndexOf( "*/" );
+                    if ( ( idxCommentEnd > idxCommentStart ) && ( idxCommentEnd < strSrc.Length - 2 ) ) {
+                        strSrc = strSrc.Substring( 0, idxCommentStart ) +
+                            strSrc.Substring( idxCommentEnd + 2 );
+                    }
+                }
+                
                 ParseBlock(strSrc, ref root, ref _ownTypes);
                 if ( root.Body[0].Count == 1 ) {
                     root = root.Body[0][0];
                 }
                 return root;
-            } catch { }
+            } catch (Exception ex) {
+                int dummyVar1 = 0;
+            }
             return null;
         }
         
@@ -69,7 +80,7 @@ namespace decoder {
                 /* If idxFirstScopeEntry < idxFirstSemicolon that means this ATOX has body! So proceed it */
                 if ( ( idxFirstSOS > 0 ) && ( idxFirstSOS < idxFirstSemicolon ) ) {
                     /* Find parity EOS */
-                    int idxEOS = FindParityIndex( strSrc, '{', '}' );
+                    int idxEOS = strSrc.FindParityIndex( '{', '}' );
                     if ( ( idxEOS < 0 ) || ( idxEOS >= strSrc.Length ) ) { throw new Exception( "Not found parity of ATOX in: \r\n" + strSrc ); }
                     /* Parse its childs (only its scope) */
                     string atoxScope = strSrc.Substring( idxFirstSOS + 1, idxEOS - idxFirstSOS - 1 );
@@ -164,28 +175,6 @@ namespace decoder {
                 /* Get only not processed part */
                 strSrc = strSrc.Substring( idxEndAtox );
             }
-        }
-        
-        /// <summary>
-        /// Finds index of parity correct end of scope
-        /// </summary>
-        /// <param name="strIn"></param>
-        /// <param name="charSOS"></param>
-        /// <param name="charEOS"></param>
-        /// <param name="idxStart"></param>
-        /// <returns>Index of parity scope EOS, or -1 when not found</returns>
-        public static int FindParityIndex(string strIn, char charSOS, char charEOS, int idxStart = 0) {
-            int cntrParity = 0;
-            for ( int idx = idxStart; idx < strIn.Length; idx++ ) {
-                if ( strIn[idx] == charSOS ) { cntrParity++; }
-                else if ( strIn[idx] == charEOS ) {
-                    cntrParity--;
-                    if ( cntrParity == 0 ) {
-                        return idx;
-                    }
-                }
-            }
-            return -1;
         }
         
         
