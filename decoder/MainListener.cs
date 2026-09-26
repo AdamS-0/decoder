@@ -78,7 +78,13 @@ namespace decoder {
         }
         
         private void menuAboutClick ( object sender, EventArgs e ) {
-            MessageBox.Show( "Application to decode raw hexdecimal byte array by given patterns, based on C struct templates.\r\nDecoder byAdamS-0 2026" );
+            string text = "";
+            text += AppInfo.Name;
+            text = text + " [" + AppInfo.Version + "]";
+            text = text + " - " + AppInfo.Author;
+            text = text + "\r\n" + AppInfo.Description;
+            
+            MessageBox.Show( text + "\r\nApplication to decode raw hexdecimal byte array by given patterns, based on C struct templates." );
         }
         
         private void menuExitClick ( object sender, EventArgs e ) {
