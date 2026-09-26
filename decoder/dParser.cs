@@ -31,25 +31,12 @@ namespace decoder {
             
             dObject root = new dObject();
             /* 2. Get into srouce header file */
-            try {
-                int idxCommentStart = 0;
-                while ( ( idxCommentStart = strSrc.IndexOf("/*", idxCommentStart) ) >= 0 ) {
-                    int idxCommentEnd = strSrc.IndexOf( "*/" );
-                    if ( ( idxCommentEnd > idxCommentStart ) && ( idxCommentEnd < strSrc.Length - 2 ) ) {
-                        strSrc = strSrc.Substring( 0, idxCommentStart ) +
-                            strSrc.Substring( idxCommentEnd + 2 );
-                    }
-                }
-                
-                ParseBlock(strSrc, ref root, ref _ownTypes);
-                if ( root.Body[0].Count == 1 ) {
-                    root = root.Body[0][0];
-                }
-                return root;
-            } catch (Exception ex) {
-                int dummyVar1 = 0;
+            RemoveComments( ref strSrc );
+            ParseBlock(strSrc, ref root, ref _ownTypes);
+            if ( root.Body[0].Count == 1 ) {
+                root = root.Body[0][0];
             }
-            return null;
+            return root;
         }
         
         /// <summary>
@@ -69,11 +56,14 @@ namespace decoder {
                 int idxEndAtox          = -1;
                 
                 /* Find out which is first */
-                try {
-                    idxFirstSemicolon = strSrc.IndexOf(';');
-                    idxFirstSOS = strSrc.IndexOf('{');
-                } catch {}
-//                if ( ( idxFirstSemicolon == -1 ) && ( idxFirstSOS == -1 ) ) { break; }
+                idxFirstSemicolon = strSrc.IndexOf(';');
+                idxFirstSOS = strSrc.IndexOf('{');
+                
+                if ( idxFirstSOS > 0 ) {
+                    /* Find parity EOS */
+                    int idxEOS = strSrc.FindParityIndex( '{', '}' );
+                    if ( ( idxEOS < 0 ) || ( idxEOS >= strSrc.Length ) ) { throw new Exception( "Parity not found for ATOX in: \r\n\"\r\n" + strSrc + "\r\n\"\r\n" ); }
+                }
                 
                 dObject atox = new dObject();
                 
@@ -81,63 +71,15 @@ namespace decoder {
                 if ( ( idxFirstSOS > 0 ) && ( idxFirstSOS < idxFirstSemicolon ) ) {
                     /* Find parity EOS */
                     int idxEOS = strSrc.FindParityIndex( '{', '}' );
-                    if ( ( idxEOS < 0 ) || ( idxEOS >= strSrc.Length ) ) { throw new Exception( "Not found parity of ATOX in: \r\n" + strSrc ); }
+                    if ( ( idxEOS < 0 ) || ( idxEOS >= strSrc.Length ) ) { throw new Exception( "Parity not found for ATOX in: \r\n\"\r\n" + strSrc + "\r\n\"\r\n" ); }
                     /* Parse its childs (only its scope) */
                     string atoxScope = strSrc.Substring( idxFirstSOS + 1, idxEOS - idxFirstSOS - 1 );
                     ParseBlock( atoxScope, ref atox, ref ownTypes );
                     strSrc = strSrc.Substring( 0, idxFirstSOS) + strSrc.Substring( idxEOS + 1 );
                     
                     idxEndAtox = strSrc.IndexOf(';') + 1;
-                    {
-                        int idxCommentEnd = -1;
-                        int idxNewLine = strSrc.IndexOf('\n', idxEndAtox);
-                        idxNewLine = ( idxNewLine == -1 ) ? (strSrc.Length) : idxNewLine;
-                        
-                        /* Find one line comment after definition line */
-                        int idxCommentStart = strSrc.Substring(0, idxNewLine).IndexOf("//");
-                        
-                        if ( idxCommentStart == -1 ) {
-                            /* Not found line comment here, so check for start of block comment */
-                            idxCommentStart = strSrc.Substring(0, idxNewLine).IndexOf("/*");
-                            if ( idxCommentStart >= 0 ) {
-                                /* This is block comment! */
-                                idxCommentEnd = strSrc.IndexOf("*/", idxCommentStart);
-                                if      ( idxCommentEnd >=  0 ) { idxCommentEnd += 2; }
-                                else if ( idxCommentEnd == -1 ) { idxCommentEnd = idxNewLine; }
-                                idxEndAtox = idxCommentEnd;
-                            }
-                        } else {
-                            /* This is one line comment */
-                            idxEndAtox = idxNewLine;
-                        }
-                    }
                 } else if( ( idxFirstSemicolon > 0 ) && ( idxFirstSemicolon < strSrc.Length ) ) {
-                    int idxNewLine = strSrc.IndexOf('\n', idxFirstSemicolon);
-                    if ( idxNewLine == -1 ) { idxNewLine = strSrc.Length - 1; }
-                    int idxCommentStart = strSrc.IndexOf("//");
-                    
-                    int idxCommentEnd = -1;
-                    
-                    if ( idxCommentStart == -1 ) {
-                        idxCommentStart = strSrc.IndexOf("/*");
-                        if ( idxCommentStart >= 0 ) {
-                            /* This is block comment! */
-                            idxCommentEnd = strSrc.IndexOf("*/", idxCommentStart);
-                            if ( idxCommentEnd > 0 ) { idxCommentEnd += 1; }
-                            if ( idxCommentEnd == -1) { idxCommentEnd = idxNewLine; }
-                        }
-                    } else {
-                        /* This is one line comment */
-                        if ( idxCommentStart < idxNewLine ) { idxCommentEnd = idxNewLine; }
-                    }
-                    
-                    if ( ( idxCommentStart >= 0 ) && ( idxCommentStart < idxNewLine ) ) {
-                        /* Found any comment within this sentence */
-                        if ( idxCommentEnd == -1 ) { idxCommentEnd = strSrc.Length - 1; }
-                        idxEndAtox = idxCommentEnd + 1;
-                    } else {
-                        idxEndAtox = idxFirstSemicolon + 1;
-                    }
+                    idxEndAtox = idxFirstSemicolon + 1;
                 } else {
                     /* Not foudn any '{' NOR ';', so it may be an enum body */
                     int idxComa = strSrc.IndexOf(',') + 1;
@@ -198,6 +140,34 @@ namespace decoder {
                 strSrc = Regex.Replace( strSrc, "\\b" + macro.Name + "\\b", macro.Value );
             }
         }
+        
+        
+        void RemoveComments( ref string strSrc ) {
+            RemoveLineComments( ref strSrc );
+            int idxCommentStart = 0;
+            while ( ( idxCommentStart = strSrc.IndexOf("/*", idxCommentStart) ) >= 0 ) {
+                int idxCommentEnd = strSrc.IndexOf( "*/" );
+                if ( ( idxCommentEnd > idxCommentStart ) && ( idxCommentEnd < strSrc.Length - 2 ) ) {
+                    strSrc = strSrc.Substring( 0, idxCommentStart ) +
+                        strSrc.Substring( idxCommentEnd + 2 );
+                }
+            }
+        }
+        
+        void RemoveLineComments( ref string strSrc ) {
+            const string    strCommentLine  = "//";
+            int             idxCommentStart = 0;
+            int             idxNewLine      = -1;
+            
+            while ( ( idxCommentStart = strSrc.IndexOf( strCommentLine, idxCommentStart ) ) >= 0 ) {
+//                strSrc = strSrc.Substring(0, idxCommentStart) + "/*" + strSrc.Substring( idxCommentStart + strCommentLine.Length );
+                idxNewLine = strSrc.IndexOfAny( new char[] { '\r', '\n' }, idxCommentStart );
+                if ( idxNewLine < 0 || idxCommentStart > strSrc.Length ) {
+                    idxNewLine = strSrc.Length - 1;
+                }
+                strSrc = strSrc.Substring(0, idxCommentStart) + strSrc.Substring( idxNewLine );
+            }
+        }
     }
     
     class Macro {
@@ -223,7 +193,7 @@ namespace decoder {
             DataTable dt = new DataTable();
             try {
                 m.Value = dt.Compute( m.ValueRaw, "" ).ToString();
-            } catch (Exception ex) { m.Value = m.ValueRaw; }
+            } catch { m.Value = m.ValueRaw; }
             return m;
         }
     }

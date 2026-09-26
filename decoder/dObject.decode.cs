@@ -44,7 +44,7 @@ namespace decoder {
                                         break;
                                     }
                                 }
-                            } catch (Exception ex) {}
+                            } catch {}
                             
                             if ( !foundEnum ) {
                                 ((object[])this.Value)[idxElement] = InterpretBits( (ulong)this.Raw[idxElement], true, this.ElementSizeBits );

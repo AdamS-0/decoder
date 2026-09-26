@@ -103,6 +103,7 @@ namespace decoder {
             toObj.dObjRaw   = this.dObjRaw;
             toObj.Raw       = this.Raw;
             toObj.Value     = this.Value;
+            toObj.TypeName  = this.TypeName;
             
             if ( this.Type == DecType.Complex ) {
                 toObj.Body.Clear();
@@ -214,7 +215,7 @@ namespace decoder {
             Body.Add( newList );
         }
         
-        public string ToString() { return "dObject: [" + this.Name + "]"; }
+        public override string ToString() { return "dObject: [" + this.Name + "]"; }
         
     }
     

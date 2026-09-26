@@ -182,7 +182,13 @@ namespace decoder {
                 int idxEqualsSign = parts.IndexOf("=");
                 if ( idxEqualsSign < 0 || idxEqualsSign >= ( parts.Count - 1 ) ) { throw new Exception( "Value missing!" ); }
                 
-                this.Value = Convert.ToInt32( parts[idxEqualsSign + 1] );
+                string val = "";
+                while ( parts.Count > ( idxEqualsSign + 1 ) ) {
+                    val += parts[idxEqualsSign + 1] + " ";
+                    parts.RemoveAt( idxEqualsSign + 1 );
+                }
+                
+                this.Value = Convert.ToInt32( val );
                 parts.RemoveAt( idxEqualsSign );
             }
         }
@@ -280,6 +286,9 @@ namespace decoder {
         /// <param name="atox"></param>
         /// <param name="strAtoxParams"></param>
         public void ParseParamsOfAtox(string strAtoxParams, ref List<dObject> ownTypes) {
+            
+            if ( strAtoxParams.Length == 0 ) { return; }
+            
             bool    isPointer       = false;
             ushort  noUsedBits      = 0;
             string  strNoElements   = "1";
@@ -379,21 +388,5 @@ namespace decoder {
             }
         }
         
-        
-        public void RebuildPattern() {
-            List<dObject> fields = new List<dObject>();
-            DecoderGui decGui = MainListener.GetCurrGui();
-            /* TODO restore this functionality */
-            
-//            foreach ( dObject orgField in this.Body ) {
-//                List<dObject> fieldsSub = dObject.TryDecodeField( orgField.dObjRaw, decGui._decoders );
-//                foreach ( dObject field in fieldsSub ) {
-//                    if ( field == null ) { continue; }
-//                    fields.Add( field );
-//                }
-//            }
-//            this.Body.Clear();
-//            this.Body = fields;
-        }
     }
 }

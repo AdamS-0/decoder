@@ -115,9 +115,14 @@ namespace decoder {
             /* Print all fields in this object */
             TreeDetailsViewItem node = parentNode == null ? structInfoView1.AddNode( decField.Name ) : parentNode.AddSubNode( decField.Name );
             node.AddSubitem( decField.GetTypeAsString() );
-            node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
+            TreeDetailsViewSubItem subItemBitsSize = node.AddSubitem( decField.GetTotalSizeInBits().ToString() );
             node.Tag2 = bitOffset;
             node.Tag3 = decField.GetTotalSizeInBits();
+            
+            if ( decField.GetTotalSizeInBits() == 0 ) {
+                subItemBitsSize.ForeColor = Color.Red;
+                subItemBitsSize.Font = new Font( subItemBitsSize.Font, FontStyle.Bold );
+            }
             
             if ( decField.NoElements > 10 ) { node.Collapsed = true; }
             if ( embdLvl > 1 ) { node.Collapsed = true; }
@@ -247,7 +252,9 @@ namespace decoder {
                     _decCurrent.TryDecodeData( dataBytes );
                     structInfoView1.Refresh();
                 }
-            } catch (Exception ex) { }
+            } catch (Exception ex) {
+                MessageBox.Show( ex.ToString() );
+            }
         }
         
         static byte[] StringToByteArray(string hex) {
@@ -308,17 +315,8 @@ namespace decoder {
             }
         }
         
-        
-        void TlStrpBtnRebuildPatternsClick ( object sender, EventArgs e ) {
-            try {
-                _decCurrent.RebuildPattern();
-                BindDecoder( _decCurrent );
-            } catch {}
-        }
-        
-        
         void TlStrpBtnRemovePatternClick ( object sender, EventArgs e ) {
-            if ( _decCurrent == null ) { return; }
+//            if ( _decCurrent == null ) { return; }
             
             TreeNode node = trVwPatterns.SelectedNode;
             if ( node == null ) { return; }
@@ -346,10 +344,14 @@ namespace decoder {
         }
         
         public void TryParseNewPattern(string newPattern, string patternName = "") {
-            dObject dec = _parser.ParseSource( newPattern );
-            if ( dec != null ) {
-                AddDecoder( ref dec );
-                TryDecodeRawData( skipHash: true );
+            try {
+                dObject dec = _parser.ParseSource( newPattern );
+                if ( dec != null ) {
+                    AddDecoder( ref dec );
+                    TryDecodeRawData( skipHash: true );
+                }
+            } catch (Exception ex) {
+                MessageBox.Show( ex.ToString() );
             }
         }
         

@@ -97,7 +97,7 @@
     <Compile Include="formNewPattern.Designer.cs">
       <DependentUpon>formNewPattern.cs</DependentUpon>
     </Compile>
-    <Compile Include="ListExtension.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="MainListener.cs" />
     <Compile Include="MainListener.Designer.cs">
       <DependentUpon>MainListener.cs</DependentUpon>
