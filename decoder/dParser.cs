@@ -121,6 +121,11 @@ namespace decoder {
         
         
         void ProcessPrecompilers( ref string strSrc ) {
+            RemoveSeqToEndLine( ref strSrc, "#if" );
+            RemoveSeqToEndLine( ref strSrc, "#el" );
+            RemoveSeqToEndLine( ref strSrc, "#en" );
+            RemoveSeqToEndLine( ref strSrc, "#include" );
+            
             const string strMacroBase = "#define";
             
             int idxMacroStart = -1;
@@ -141,9 +146,8 @@ namespace decoder {
             }
         }
         
-        
         void RemoveComments( ref string strSrc ) {
-            RemoveLineComments( ref strSrc );
+            RemoveSeqToEndLine( ref strSrc, "//" );
             int idxCommentStart = 0;
             while ( ( idxCommentStart = strSrc.IndexOf("/*", idxCommentStart) ) >= 0 ) {
                 int idxCommentEnd = strSrc.IndexOf( "*/" );
@@ -154,18 +158,16 @@ namespace decoder {
             }
         }
         
-        void RemoveLineComments( ref string strSrc ) {
-            const string    strCommentLine  = "//";
-            int             idxCommentStart = 0;
-            int             idxNewLine      = -1;
+        void RemoveSeqToEndLine( ref string strSrc, string strSeq ) {
+            int             idxStart    = 0;
+            int             idxNewLine  = -1;
             
-            while ( ( idxCommentStart = strSrc.IndexOf( strCommentLine, idxCommentStart ) ) >= 0 ) {
-//                strSrc = strSrc.Substring(0, idxCommentStart) + "/*" + strSrc.Substring( idxCommentStart + strCommentLine.Length );
-                idxNewLine = strSrc.IndexOfAny( new char[] { '\r', '\n' }, idxCommentStart );
-                if ( idxNewLine < 0 || idxCommentStart > strSrc.Length ) {
+            while ( ( idxStart = strSrc.IndexOf( strSeq, idxStart ) ) >= 0 ) {
+                idxNewLine = strSrc.IndexOfAny( new char[] { '\r', '\n' }, idxStart );
+                if ( idxNewLine < 0 || idxStart > strSrc.Length ) {
                     idxNewLine = strSrc.Length - 1;
                 }
-                strSrc = strSrc.Substring(0, idxCommentStart) + strSrc.Substring( idxNewLine );
+                strSrc = strSrc.Substring(0, idxStart) + strSrc.Substring( idxNewLine );
             }
         }
     }
