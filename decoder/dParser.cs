@@ -192,9 +192,8 @@ namespace decoder {
             m.ValueRaw = m.ValueRaw.Replace( '\t', ' ' );
             m.ValueRaw = m.ValueRaw.Replace( '\n', ' ' );
             
-            DataTable dt = new DataTable();
             try {
-                m.Value = dt.Compute( m.ValueRaw, "" ).ToString();
+                m.Value = UInt64Expression.Evaluate( m.ValueRaw ).ToString();
             } catch { m.Value = m.ValueRaw; }
             return m;
         }

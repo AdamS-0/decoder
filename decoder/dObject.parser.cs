@@ -187,9 +187,13 @@ namespace decoder {
                     val += parts[idxEqualsSign + 1] + " ";
                     parts.RemoveAt( idxEqualsSign + 1 );
                 }
-                
-                this.Value = Convert.ToInt32( val );
                 parts.RemoveAt( idxEqualsSign );
+                
+                try {
+                    this.Value = UInt64Expression.Evaluate( val );
+                } catch {
+                    this.Value = val;
+                }
             }
         }
         
@@ -204,7 +208,7 @@ namespace decoder {
             }
         }
         
-        private void TryGetNoElements(ref string strNoElements, ref List<string> parts) {
+        private void TryGetNoElements(ref string strNoElements, ref List<string> parts, ref List<dObject> ownTypes) {
             if ( parts.Contains("[") ) {
                 /* this is an array! */
                 int idxNoElements = parts.IndexOf("[");
@@ -213,11 +217,44 @@ namespace decoder {
                 strNoElements = parts[idxNoElements + 1];
                 parts.RemoveAt( idxNoElements );
                 int idxEOS = parts.IndexOf("]");
-                if ( ( idxEOS >= 0 ) && ( idxEOS < parts.Count ) ) {
-                    parts.RemoveAt( idxEOS );
+                
+                string strVal = "";
+                while ( (idxEOS--) > idxNoElements ) {
+                    strVal += parts[idxNoElements] + " ";
+                    parts.RemoveAt( idxNoElements );
                 }
+                parts.RemoveAt( idxNoElements );
+                strNoElements = strVal;
             } else {
                 strNoElements = "1";
+            }
+            
+            
+            bool foundReference = false;
+            string strLastEnumVal = strNoElements;
+            int val = 0;
+            
+            try {
+                val = IntExpression.Evaluate( strLastEnumVal );
+                foundReference = true;
+            } catch {}
+            
+            for ( int idxDObj = 0; ( idxDObj < ownTypes.Count ) && !foundReference; idxDObj++ ) {
+                if ( !ownTypes [ idxDObj ].IsEnum ) { continue; }
+                
+                for ( int idx = 0; idx < ownTypes [ idxDObj ].Body [ 0 ].Count; idx++ ) {
+                    dObject foreignEnum = ownTypes [ idxDObj ].Body [ 0 ] [ idx ];
+                    strLastEnumVal = strLastEnumVal.Replace( foreignEnum.Name, foreignEnum.Value.ToString() );
+                    try {
+                        val = IntExpression.Evaluate( strLastEnumVal );
+                        foundReference = true;
+                        break;
+                    } catch { }
+                }
+            }
+            
+            if ( foundReference ) {
+                strNoElements = val.ToString();
             }
         }
         
@@ -236,27 +273,49 @@ namespace decoder {
         private void ProcessEnumTypedef( ref ushort noUsedBits, ref List<dObject> ownTypes) {
             int enumerator = 0;
             for ( int idxBody = 0; idxBody < this.Body[0].Count; idxBody++ ) {
-                if ( this.Body[0][idxBody].Value == null ) {
-                    this.Body[0][idxBody].Value = enumerator;
+                dObject thisEnum = this.Body[0][idxBody];
+                if ( thisEnum.Value == null ) {
+                    thisEnum.Value = enumerator;
                 } else {
                     try {
-                        enumerator = Convert.ToInt32( this.Body[0][idxBody].Value );
+                        enumerator = Convert.ToInt32( thisEnum.Value );
                     } catch {
                         /* This is not a number, so check for existing reference (enum) */
-                        if ( this.Body[0][idxBody].Value == null ) { break; }
-                        if ( this.Body[0][idxBody].Value.GetType() != typeof(string) ) { break; }
+                        if ( thisEnum.Value == null ) { break; }
+                        if ( thisEnum.Value.GetType() != typeof(string) ) { break; }
                         /* Make sure we parse only string */
                         bool foundReference = false;
-                        string strLastEnumVal = this.Body[0][idxBody].Value.ToString();
+                        string strLastEnumVal = thisEnum.Value.ToString();
                         try {
                             for ( int idxDObj = 0; ( idxDObj < ownTypes.Count ) && !foundReference; idxDObj++ ) {
                                 if ( !ownTypes[idxDObj].IsEnum ) { continue; }
                                 
                                 for ( int idx = 0; idx < ownTypes[idxDObj].Body[0].Count; idx++ ) {
-                                    if ( ownTypes[idxDObj].Body[0][idx].Name.Equals( strLastEnumVal ) ) {
-                                        enumerator = Convert.ToInt32( ownTypes[idxDObj].Body[0][idx].Value );
+                                    dObject foreignEnum = ownTypes[idxDObj].Body[0][idx];
+                                    strLastEnumVal = strLastEnumVal.Replace( foreignEnum.Name, foreignEnum.Value.ToString() );
+                                    try {
+                                        enumerator = IntExpression.Evaluate( strLastEnumVal );
+                                        thisEnum.Value = enumerator;
                                         foundReference = true;
                                         break;
+                                    } catch {
+                                        thisEnum.Value = strLastEnumVal;
+                                    }
+                                }
+                            }
+                            
+                            if ( !foundReference ) {
+                                /* Not found external reference, so check itself childs */
+                                for ( int idx = 0; ( idx < this.Body[0].Count ) && !foundReference; idx++ ) {
+                                    dObject foreignEnum = this.Body[0][idx];
+                                    strLastEnumVal = strLastEnumVal.Replace( foreignEnum.Name, foreignEnum.Value.ToString() );
+                                    try {
+                                        enumerator = IntExpression.Evaluate( strLastEnumVal );
+                                        thisEnum.Value = enumerator;
+                                        foundReference = true;
+                                        break;
+                                    } catch {
+                                        thisEnum.Value = strLastEnumVal;
                                     }
                                 }
                             }
@@ -310,7 +369,7 @@ namespace decoder {
             TryGetValueAfterEqualsSign(ref parts);
             
             TryGetNoUsedBits(ref noUsedBits, ref parts);
-            TryGetNoElements(ref strNoElements, ref parts);
+            TryGetNoElements(ref strNoElements, ref parts, ref ownTypes);
             isPointer = GetIsPointerType(ref parts);
             
             ProcessBasicKeyWords( ref parts );

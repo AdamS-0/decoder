@@ -109,6 +109,7 @@
       <DependentUpon>Resource1.resx</DependentUpon>
       <AutoGen>True</AutoGen>
     </Compile>
+    <Compile Include="UInt64Expression.cs" />
     <Compile Include="vn.cs" />
   </ItemGroup>
   <ItemGroup>
