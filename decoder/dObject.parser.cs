@@ -190,7 +190,7 @@ namespace decoder {
                 parts.RemoveAt( idxEqualsSign );
                 
                 try {
-                    this.Value = UInt64Expression.Evaluate( val );
+                    this.Value = IntExpression.Evaluate( val );
                 } catch {
                     this.Value = val;
                 }

@@ -1,0 +1,47 @@
+typedef struct {
+    uint8_t tab[256];
+    uint8_t rest;
+} myTab;
+
+typedef struct {
+    uint32_t tab[64];
+    uint8_t rest;
+} myTab2;
+
+typedef struct {
+    uint64_t tab[32];
+    uint8_t rest;
+} myTab64;
+
+
+typedef struct {
+     int8_t varI8;
+    uint8_t varU8;
+     int16_t varI16;
+    uint16_t varU16;
+     int32_t varI32;
+    uint32_t varU32;
+     int64_t varI64;
+    uint64_t varU64;
+    
+    float f1;
+    float myPi;
+    float negativeEps;
+    
+    double f1;
+    double myPi;
+    double negativeEps;
+    
+    char myAChar;
+    char myStr[10];
+} myTestStruct;
+
+F1 FA 00 83 00 FA 00 6C CA 88 00 28 6B EE 00 00 7C 1D AF 93 19 83 00 00 08 C5 A1 D8 CC F9 00 00 C0 BF D8 0F 49 40 17 B7 D1 B8 7B 14 AE 47 E1 FA 23 C0 44 17 41 54 FB 21 09 40 95 D6 26 E8 0B 2E 11 BE 5A 48 65 6C 6C 6F 00 00 00 41 42
+
+typedef struct {
+    uint16_t normalU16;
+    union {
+        uint32_t rawU32;
+        char     str[4];
+    };
+}myStructWithUnions_t;

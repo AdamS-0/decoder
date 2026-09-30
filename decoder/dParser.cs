@@ -102,12 +102,12 @@ namespace decoder {
                     atox.ParseParamsOfAtox( strAtoxParams, ref ownTypes );
                     parent.Body[0].Add( atox );
                     if ( atox.IsTypedef ) {
-                        dObject prevAtox = ownTypes.Find( o => o.Name == atox.Name );
-                        if ( prevAtox == null ) {
-                            ownTypes.Add( atox );
-                        } else {
+                        int idxRef = ownTypes.FindIndex( o => o.Name == atox.Name );
+                        if ( idxRef >= 0 ) {
                             /* Replace with new instance */
-                            prevAtox = atox;
+                            ownTypes[idxRef] = atox;
+                        } else {
+                            ownTypes.Add( atox );
                         }
                     }
                 }
